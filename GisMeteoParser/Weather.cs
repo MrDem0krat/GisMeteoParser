@@ -11,6 +11,10 @@ namespace GisMeteoWeather
     {
         #region Свойства
         /// <summary>
+        /// ID города, для которого предоставлен прогноз
+        /// </summary>
+        public int CityID { get; set; }
+        /// <summary>
         /// Cостояние погоды
         /// </summary>
         public string Condition { get; set; }
@@ -63,8 +67,9 @@ namespace GisMeteoWeather
 
         #region Конструкоры
         public Weather() { }
-        public Weather(DateTime date, DayPart partOfDay, string condition, int humidity, int pressure, int temperature, string type, string windDirection, float windSpeed)
+        public Weather(int cityID, DateTime date, DayPart partOfDay, string condition, int humidity, int pressure, int temperature, string type, string windDirection, float windSpeed)
         {
+            CityID = cityID;
             Date = date;
             PartOfDay = partOfDay;
             Condition = condition;
@@ -78,9 +83,9 @@ namespace GisMeteoWeather
         #endregion
         public override string ToString()
         {
-            return String.Format("Дата прогноза: {0} \nВремя суток: {1} \nTeмпература: {2} \nОщущаемая температура: {3}\nСостояние: {4} \nИзображение: {5} \n"+
+            return String.Format("ID города: {10} \nДата прогноза: {0} \nВремя суток: {1} \nTeмпература: {2} \nОщущаемая температура: {3}\nСостояние: {4} \nИзображение: {5} \n"+
                                     "Влажность: {6} \nДавление: {7} \nНаправление ветра: {8} \nСкорость ветра: {9}",
-                                    Date.ToShortDateString(), PartOfDay, Temperature, TemperatureFeel, Condition, TypeImage, Humidity, Pressure, WindDirection, WindSpeed);
+                                    Date.ToShortDateString(), PartOfDay, Temperature, TemperatureFeel, Condition, TypeImage, Humidity, Pressure, WindDirection, WindSpeed, CityID);
         }
     }
 }

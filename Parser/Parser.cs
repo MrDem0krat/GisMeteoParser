@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 using NLog;
 using System.Net;
 
@@ -11,15 +12,31 @@ namespace ParserLib
 {
     public class Parser : IParser
     {
+        //Событие опопвещающее о том, что прогноз получен
         public event EventHandler<WeatherParsedEventArgs> WeatherParsed;
+        //События для оповещения вызывающего кода о состоянии парсера
+        public event EventHandler ParserStarted; //Парсер запущен
+        public event EventHandler ParserAsleep; //Парсер в режиме ожидания
+        public event EventHandler ParserStopped; //Парсер остановлен
+
         public delegate IWeatherInfo ParserGetDataHandler(HtmlDocument _source, DayToParse dayToParse = DayToParse.Today, DayPart dayPart = DayPart.Day);
 
         private static Logger _parserLogger = LogManager.GetCurrentClassLogger();
-        private ParserGetDataHandler listofHandlers;
+
         /// <summary>
         /// Обрабатываемый Html-документ с прогнозом погоды
         /// </summary>
         private HtmlDocument _weatherDocument = new HtmlDocument();
+        /// <summary>
+        /// Объект для хранения ссылки на метод, выполняющий выборку информации со страницы
+        /// </summary>
+        private ParserGetDataHandler parserHandler;
+        /// <summary>
+        /// Ссылка на поток в котором выполняется функция парсинга
+        /// </summary>
+        private Thread parserThread;
+
+
 
         #region Свойства
         /// <summary>
@@ -33,9 +50,28 @@ namespace ParserLib
         public Dictionary<int, string> Cities { get; set; }
 
         /// <summary>
+        /// Время последнего обновления
+        /// </summary>
+        public DateTime LastRefresh { get; private set; }
+
+        /// <summary>
         /// Адрес сайта без указания ID города
         /// </summary>
         public string TargetUrl { get; set; }
+
+        /// <summary>
+        /// Текущее состояние парсера
+        /// </summary>
+        public ParserStatus Status { get; private set; }
+        /// <summary>
+        /// Ссылка на метод, выполняющий выборку данных со страницы
+        /// </summary>
+        public ParserGetDataHandler ParserHandler
+        {
+            private get { return parserHandler; }
+            set { parserHandler += value; }
+        }
+
         #endregion
 
         #region Конструкторы
@@ -73,6 +109,12 @@ namespace ParserLib
             }
             return false;
         }
+        public static Task<bool> CheckConnectionAsync()
+        {
+            var task = new Task<bool>(() => Parser.CheckConnection());
+            task.Start();
+            return task;
+        }
 
         /// <summary>
         /// Функция загрузки Html-страницы с погодой
@@ -102,38 +144,120 @@ namespace ParserLib
             }
         }
 
-        /// <summary>
-        /// Метод регистрирует функцию, которая выполняет выборку данных
-        /// </summary>
-        /// <param name="handler">Ссылка на функцию-обработчик данных</param>
-        public void RegisterParserHandler(ParserGetDataHandler handler)
-        {
-            listofHandlers += handler;
-        }
-
+        /*
         public void Start(params string[] prms)
         {
+            Status = ParserStatus.Started;
+            if(ParserStarted != null)
+            {
+                ParserStarted(this, new EventArgs());
+            }
+
             string _errorText = String.Empty;
             Exception ex = null;
+
             if (CheckConnection())
-                if (listofHandlers != null)
+            {
+                if (parserHandler != null)
                 {
-                    foreach (var item in Cities)
+                    foreach (var city in Cities)
                     {
-                        Console.WriteLine("\nПогода в г. "+ item.Value + "\n");
-                        _weatherDocument = DownloadPage(TargetUrl + item.Key);
-                        IWeatherInfo weather = listofHandlers(_weatherDocument);
+                        _weatherDocument = DownloadPage(TargetUrl + city.Key);
+                        IWeatherInfo weather = ParserHandler(_weatherDocument);
+                        weather.CityID = city.Key;
                         if (WeatherParsed != null)
                         {
-                            WeatherParsed(this, new WeatherParsedEventArgs(weather));
+                            WeatherParsed(this, new WeatherParsedEventArgs(weather, DateTime.Now));
                         }
                     }
                 }
+            }
+            else
+            {
+                _errorText = "Connection error. Check your Internet connection!";
+                ex = new WebException(_errorText, WebExceptionStatus.ConnectFailure);
+            }
+            if (ParserAsleep != null)
+                ParserAsleep(this, new EventArgs());
+            Status = ParserStatus.Sleeping;
+            Thread.Sleep(RefreshPeriod);
         }
-        
+        */
+        /// <summary>
+        /// Запуск работы парсера в отдельном потоке
+        /// </summary>
+        /// <param name="prms"></param>
+        /// <returns></returns>
+        public async Task StartAsync(params string[] prms)
+        {
+            if (ParserStarted != null)
+            {
+                ParserStarted(this, new EventArgs());
+            }
+            string _errorText = String.Empty;
+            Exception ex = null;
+            Status = ParserStatus.Started;
+            await Task.Run(() =>
+            {
+                parserThread = Thread.CurrentThread;
+                try
+                {
+                    while (true)
+                    {
+                        Status = ParserStatus.Started;
+                        if (CheckConnection())
+                        {
+                            if (parserHandler != null)
+                            {
+                                foreach (var city in Cities)
+                                {
+                                    _weatherDocument = DownloadPage(TargetUrl + city.Key);
+                                    IWeatherInfo weather = ParserHandler(_weatherDocument);
+                                    weather.CityID = city.Key;
+                                    if (WeatherParsed != null)
+                                    {
+                                    WeatherParsed(this, new WeatherParsedEventArgs(weather, DateTime.Now));
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            _errorText = "Connection error. Check your Internet connection!";
+                            ex = new WebException(_errorText, WebExceptionStatus.ConnectFailure);
+                        }
+                        LastRefresh = DateTime.Now;
+                        if (ParserAsleep != null)
+                            ParserAsleep(this, new EventArgs());
+                        Status = ParserStatus.Sleeping;
+                        Thread.Sleep(RefreshPeriod);
+                    }
+                }
+                catch (ThreadAbortException)
+                {
+                    if (Status == ParserStatus.Started)
+                    {
+                        Console.WriteLine("Parser has been aborted while working. Writing info to database cancelled.");
+                        Status = ParserStatus.Aborted;
+                    }
+                    if (Status == ParserStatus.Sleeping)
+                    {
+                        Console.WriteLine("Parser has been safely stopped");
+                        Status = ParserStatus.Stoped;
+                    }
+                }
+            });
+        }
 
         public void Stop()
         {
+            if (parserThread != null)
+            {
+                parserThread.Abort();
+            }
+            this.Dispose();
+            if (ParserStopped != null)
+                ParserStopped(this, new EventArgs());
         }
 
         #region IDisposable Support
@@ -145,6 +269,7 @@ namespace ParserLib
             {
                 if (disposing)
                 {
+
                     // TODO: освободить управляемое состояние (управляемые объекты).
                 }
 

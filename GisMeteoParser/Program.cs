@@ -12,30 +12,70 @@ namespace GisMeteoWeather
     {
         static void Main(string[] args)
         {
-            Dictionary<int, string> test = new Dictionary<int, string>();
-            Parser parser = new Parser(Properties.Resources.TargetSiteUrl);
-            parser.WeatherParsed += parser_WeatherParsed;
+            bool isRun = true;
+            string answer = String.Empty;
 
-            parser.Cities = Worker.GetCityList();
+            Parser parser = new Parser(Properties.Resources.TargetSiteUrl, new TimeSpan(0, 1, 0), Worker.GetCityList());
 
-            parser.RegisterParserHandler(new Parser.ParserGetDataHandler(Worker.ParseWeatherData));
-            parser.Start();
+            //parser.WeatherParsed += Worker.parser_WeatherParsed;
+            parser.ParserStarted += Worker.parser_Started;
+            parser.ParserStopped += Worker.parser_Stopped;
+            parser.ParserAsleep += Worker.parser_Asleep;
 
-            Console.ReadLine();
-        }
+            parser.ParserHandler = new Parser.ParserGetDataHandler(Worker.ParseWeatherData);
+            parser.StartAsync();
 
-        static void parser_WeatherParsed(object sender, WeatherParsedEventArgs e)
-        {
-            if(!e.HasError)
+            #region Обработка пользовательского ввода
+            while (isRun)
             {
-                Console.WriteLine(e.WeatherItem);
+                answer = Console.ReadLine().ToLower();
+                switch (answer)
+                {
+                    case "exit":
+                        isRun = false;
+                        if (parser.Status == ParserStatus.Started || parser.Status == ParserStatus.Sleeping)
+                        {
+                            parser.Stop();
+                        }
+                        break;
+                    case "stop":
+                        if (parser.Status == ParserStatus.Started || parser.Status == ParserStatus.Sleeping)
+                        {
+                            parser.Stop();
+                        }
+                        else
+                        {
+                            Console.WriteLine("Parser already stopped!");
+                        }
+                        break;
+                    case "start":
+                        if (parser.Status == ParserStatus.Stoped || parser.Status == ParserStatus.Aborted)
+                        {
+                            parser.StartAsync();
+                        }
+                        else
+                        {
+                            Console.WriteLine("Parser already working!");
+                        }
+                        break;
+                    case "?":
+                        Console.WriteLine("List of available commands:\n\n" +
+                                            "start\tStart parsing\n" +
+                                            "stop\tStop parsing\n" +
+                                            "status\tCurrent parser status\n" +
+                                            "exit\tStop parsing and close application");
+                        break;
+                    case "status":
+                        Console.WriteLine("Parser status is: {0}", parser.Status);
+                        break;
+                    case "":
+                        break;
+                    default:
+                        Console.WriteLine("Unknown command! Print '?' to view list of available commands...");
+                        break;
+                }
             }
-            else
-            {
-                Console.WriteLine("Has errors:\t" + e.HasError);
-                Console.WriteLine("Error text:\t" + e.ErrorText);
-                Console.WriteLine("Exception:\t" + e.Exception.Message);
-            }
+            #endregion
         }
     }
 }

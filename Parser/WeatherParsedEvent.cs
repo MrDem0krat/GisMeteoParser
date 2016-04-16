@@ -12,9 +12,13 @@ namespace ParserLib
         public bool HasError { get; private set; }
         public Exception Exception { get; private set; }
         public string ErrorText { get; private set; }
+        public DateTime ParsedTime { get; private set; }
 
-        public WeatherParsedEventArgs(IWeatherInfo weatherItem, string errorText = null, Exception ee = null)
+
+        public WeatherParsedEventArgs() { }
+        public WeatherParsedEventArgs(IWeatherInfo weatherItem, DateTime parsedTime, string errorText = null, Exception ee = null)
         {
+            ParsedTime = parsedTime;
             WeatherItem = weatherItem;
             HasError = !string.IsNullOrEmpty(errorText) || ee != null;
             ErrorText = errorText;

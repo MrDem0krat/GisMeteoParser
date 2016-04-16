@@ -13,6 +13,11 @@ namespace ParserLib
     public interface IWeatherInfo
     {
         /// <summary>
+        /// ID города, для которого предоставлен прогноз
+        /// </summary>
+        int CityID { get; set; }
+
+        /// <summary>
         /// Часть дня, на которую предоставляется прогноз
         /// </summary>
         DayPart PartOfDay { get; set; }
