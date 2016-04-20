@@ -19,7 +19,7 @@ namespace ParserLib
         public event EventHandler ParserAsleep; //Парсер в режиме ожидания
         public event EventHandler ParserStopped; //Парсер остановлен
 
-        public delegate IWeatherInfo ParserGetDataHandler(HtmlDocument _source, DayToParse dayToParse = DayToParse.Today, DayPart dayPart = DayPart.Day);
+        public delegate IWeatherInfo ParserGetDataHandler(HtmlDocument _source, DayToParse dayToParse = DayToParse.Tomorrow, DayPart dayPart = DayPart.Day);
 
         private static Logger _parserLogger = LogManager.GetCurrentClassLogger();
 
@@ -35,8 +35,6 @@ namespace ParserLib
         /// Ссылка на поток в котором выполняется функция парсинга
         /// </summary>
         private Thread parserThread;
-
-
 
         #region Свойства
         /// <summary>
@@ -63,6 +61,7 @@ namespace ParserLib
         /// Текущее состояние парсера
         /// </summary>
         public ParserStatus Status { get; private set; }
+
         /// <summary>
         /// Ссылка на метод, выполняющий выборку данных со страницы
         /// </summary>
@@ -71,7 +70,6 @@ namespace ParserLib
             private get { return parserHandler; }
             set { parserHandler += value; }
         }
-
         #endregion
 
         #region Конструкторы
@@ -183,6 +181,7 @@ namespace ParserLib
             Thread.Sleep(RefreshPeriod);
         }
         */
+        //Добавить загрузку прогноза на остальные части дня
         /// <summary>
         /// Запуск работы парсера в отдельном потоке
         /// </summary>
@@ -295,7 +294,5 @@ namespace ParserLib
             // GC.SuppressFinalize(this);
         }
         #endregion
-
     }
-    
 }

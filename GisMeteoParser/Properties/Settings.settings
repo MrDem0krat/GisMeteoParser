@@ -1,9 +1,33 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="GisMeteoParser.Properties" GeneratedClassName="Settings">
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="GisMeteoWeather.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
     <Setting Name="DefaultCityID" Type="System.String" Scope="User">
       <Value Profile="(Default)">4258</Value>
+    </Setting>
+    <Setting Name="AdditionalEntropy" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">0KHQsNGI0LAsINGC0Ysg0Y7QstC10LvQuNGAIQ==</Value>
+    </Setting>
+    <Setting Name="DBServer" Type="System.String" Scope="User">
+      <Value Profile="(Default)">localhost</Value>
+    </Setting>
+    <Setting Name="DBPort" Type="System.UInt32" Scope="User">
+      <Value Profile="(Default)">3306</Value>
+    </Setting>
+    <Setting Name="DBUser" Type="System.String" Scope="User">
+      <Value Profile="(Default)">root</Value>
+    </Setting>
+    <Setting Name="DBPassword" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="DBName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">GismeteoWeather</Value>
+    </Setting>
+    <Setting Name="TableWeatherName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Weather</Value>
+    </Setting>
+    <Setting Name="TableCityName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">City</Value>
     </Setting>
   </Settings>
 </SettingsFile>
