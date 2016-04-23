@@ -21,7 +21,7 @@ namespace ParserLib
 
         public delegate IWeatherInfo ParserGetDataHandler(HtmlDocument _source, DayToParse dayToParse = DayToParse.Tomorrow, DayPart dayPart = DayPart.Day);
 
-        private static Logger _parserLogger = LogManager.GetCurrentClassLogger();
+        private static Logger _logger = LogManager.GetCurrentClassLogger();
 
         /// <summary>
         /// Обрабатываемый Html-документ с прогнозом погоды
@@ -97,13 +97,13 @@ namespace ParserLib
             try
             {
                 _response = _client.Load("http://www.ya.ru").ToString();
-                _parserLogger.Debug("Internet Connecton checked succesfully");
+                _logger.Debug("Internet Connecton checked succesfully");
                 return true;
             }
             catch (WebException _ex)
             {
-                _parserLogger.Error("Check your internet connection");
-                _parserLogger.Debug(String.Format("Internet connection error: {0}", _ex.Message));
+                _logger.Error("Check your internet connection");
+                _logger.Debug(String.Format("Internet connection error: {0}", _ex.Message));
             }
             return false;
         }
@@ -125,19 +125,19 @@ namespace ParserLib
             HtmlDocument _doc = new HtmlDocument();
             try
             {
-                _parserLogger.Debug("Try to load weather webpage");
+                _logger.Debug("Try to load weather webpage");
                 _doc = _client.Load(Url);
-                _parserLogger.Debug("Webpage loaded successfully");
+                _logger.Debug("Webpage loaded successfully");
                 return _doc;
             }
             catch (HtmlWebException webEx)
             {
-                _parserLogger.Error("FileLoadError: " + webEx.Message, webEx);
+                _logger.Error("FileLoadError: " + webEx.Message, webEx);
                 return null;
             }
             catch (Exception ex)
             {
-                _parserLogger.Error("Error: cannot load file. Reason: {0}", ex.Message);
+                _logger.Error("Error: cannot load file. Reason: {0}", ex.Message);
                 return null;
             }
         }
@@ -195,6 +195,7 @@ namespace ParserLib
             }
             string _errorText = String.Empty;
             Exception ex = null;
+            IWeatherInfo weather;
             Status = ParserStatus.Started;
             await Task.Run(() =>
             {
@@ -211,11 +212,15 @@ namespace ParserLib
                                 foreach (var city in Cities)
                                 {
                                     _weatherDocument = DownloadPage(TargetUrl + city.Key);
-                                    IWeatherInfo weather = ParserHandler(_weatherDocument);
-                                    weather.CityID = city.Key;
-                                    if (WeatherParsed != null)
+                                    for(int i=0; i < 4; i++)
                                     {
-                                    WeatherParsed(this, new WeatherParsedEventArgs(weather, DateTime.Now));
+                                        weather = ParserHandler(_weatherDocument, dayPart: (DayPart)i);
+                                        weather.CityID = city.Key;
+                                        weather.RefreshTime = DateTime.Now;
+                                        if (WeatherParsed != null)
+                                        {
+                                            WeatherParsed(this, new WeatherParsedEventArgs(weather, DateTime.Now));
+                                        }
                                     }
                                 }
                             }

@@ -1,0 +1,30 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="DataBaseWeather.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="AdditionalEntropy" Type="System.String" Scope="User">
+      <Value Profile="(Default)">wOkg4u7t8iDx7+jqIPTw7uwg7ODpIPXg8PIg6O0g6O3j6+j4</Value>
+    </Setting>
+    <Setting Name="Server" Type="System.String" Scope="User">
+      <Value Profile="(Default)">localhost</Value>
+    </Setting>
+    <Setting Name="Port" Type="System.UInt32" Scope="User">
+      <Value Profile="(Default)">3306</Value>
+    </Setting>
+    <Setting Name="User" Type="System.String" Scope="User">
+      <Value Profile="(Default)">root</Value>
+    </Setting>
+    <Setting Name="Password" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="TableWeatherName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">weather</Value>
+    </Setting>
+    <Setting Name="TableCityName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">cities</Value>
+    </Setting>
+    <Setting Name="DBName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">gismeteo_weather</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

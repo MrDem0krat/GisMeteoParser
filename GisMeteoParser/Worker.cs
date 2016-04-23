@@ -7,6 +7,9 @@ using HtmlAgilityPack;
 using NLog;
 using System.Text.RegularExpressions;
 using ParserLib;
+using DataBaseWeather;
+using NLog.Config;
+using NLog.Targets;
 
 namespace GisMeteoWeather
 {
@@ -16,6 +19,9 @@ namespace GisMeteoWeather
     public class Worker
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
+        private static Dictionary<int, string> cities = new Dictionary<int, string>();//необходис?
+        private static IWeatherInfo weather = new Weather(123, DateTime.Now, DayPart.Morning, "cool", 75, 768, 25, 28, "ololo,", "south", 2.1f, DateTime.Now); //test
+        private static Parser parser = new Parser();
 
         /// <summary>
         /// Список полученных прогнозов
@@ -191,13 +197,193 @@ namespace GisMeteoWeather
             }
             return _cityDictionary;
         }
-       
+
+        /// <summary>
+        /// Подготавливает парсер к работе
+        /// </summary>
+        public static void Setup()
+        {
+            LoggerConfig();
+            Worker.
+            _logger.Debug("Приложение запущено");
+            DataBase.Prepare(); 
+            _logger.Debug("Проверка наличия новых городов на главной странице сайта");
+            parser.Cities = GetCityList();
+            var citylist = DataBase.ReadCityList();
+            Dictionary<int, string> other = new Dictionary<int, string>();
+
+            if (!parser.Cities.Equals(citylist))
+                foreach (var newcity in parser.Cities)
+                {
+                    if (!citylist.ContainsKey(newcity.Key))
+                        other.Add(newcity.Key,newcity.Value);
+                }
+            if(other.Count > 0)
+            {
+                _logger.Debug("Доступны новые города в списке. Добавляю их в базу данных ");
+                DataBase.WriteCityList(other);
+            }
+
+            _logger.Debug("Настройка параметров парсера");
+            parser.TargetUrl = Properties.Resources.TargetSiteUrl;
+            parser.RefreshPeriod = new TimeSpan(0, 2, 0);
+            parser.ParserHandler = new Parser.ParserGetDataHandler(ParseWeatherData);
+
+            parser.WeatherParsed += parser_WeatherParsed;
+            parser.ParserStarted += parser_Started;
+            parser.ParserStopped += parser_Stopped;
+            parser.ParserAsleep += parser_Asleep;
+
+        }
+
+        /// <summary>
+        /// Выводит в консоль список городов, полученных с главной страницы GisMeteo
+        /// </summary>
+        /// <param name="source">Список городов</param>
+        public static void PrintCityList(Dictionary<int,string> source)
+        {
+            foreach (var item in source)
+                Console.WriteLine("ID: " + item.Key + "\tName: " + item.Value);
+        }
+
+        /// <summary>
+        /// Обработчик пользовательского ввода
+        /// </summary>
+        /// <param name="command"></param>
+        public static void RunCommand(string command)
+        {
+            switch (command)
+            {
+                case "?":
+                    Console.WriteLine("Список доступных команд:\n\n"+
+                        "{0,-20}Запустить парсер\n"+
+                        "{1,-20}Остановить парсер\n"+
+                        "{2,-20}Текущий статус парсера\n"+
+                        "{3,-20}Загрузить список городов с главной страницы\n"+
+                        "{4,-20}Подготовить базу данных для работы\n"+
+                        "{5,-20}Записать список городов в базу данных\n"+
+                        "{6,-20}Записать прогноз погоды в базу данных\n"+
+                        "{7,-20}Ввести пароль к БД (root)\n" +
+                        "{8,-20}Остановить парсер и закрыть приложение\n",
+                                        "start", "stop", "status", "load cl", "prepare", "write cl", "write w", "password", "exit");
+                    break;
+
+                case "exit":
+                    Program.isRun = false;
+                    if (parser.Status == ParserStatus.Started || parser.Status == ParserStatus.Sleeping)
+                    {
+                        parser.Stop();
+                    }
+                    break;
+
+                case "stop":
+                    if (parser.Status == ParserStatus.Started || parser.Status == ParserStatus.Sleeping)
+                    {
+                        parser.Stop();
+                    }
+                    else
+                    {
+                        Console.WriteLine("Парсер уже остановлен!");
+                    }
+                    break;
+
+                case "start":
+                    if (parser.Status == ParserStatus.Stoped || parser.Status == ParserStatus.Aborted)
+                    {
+                        parser.StartAsync();
+                    }
+                    else
+                    {
+                        Console.WriteLine("Парсер уже запущен!");
+                    }
+                    break;
+
+                case "status":
+                    Console.WriteLine("Статус парсера: {0}", parser.Status);
+                    break;
+
+                case "password":
+                    Console.Write("Введите пароль: ");
+                    DataBase.Password = Console.ReadLine();
+                    DataBase.SaveSettings();
+                    Console.WriteLine("Пароль успешно обновлен и сохранен");
+                    break;
+
+                case "prepare":
+                    DataBase.Prepare();
+                    Console.WriteLine("База данных подготовлена");
+                    break;
+
+                case "load cl":
+                    cities = Worker.GetCityList();
+                    Console.WriteLine("Список городов успешно загружен.");
+                    break;
+
+                case "write cl":
+                    if (DataBase.WriteCityList(cities))
+                        Console.WriteLine("Список городов успешно записан в базу данных");
+                    else
+                        Console.WriteLine("Во время записи списка городов произошла ошибка. ");
+                    foreach (var item in cities)
+                        Console.WriteLine(item.Value);
+                    break;
+
+                case "read cl":
+                    cities = DataBase.ReadCityList();
+                    Console.WriteLine("Список городов успешно прочитан из базы данных");
+                    break;
+
+                case "print cl":
+                    Worker.PrintCityList(cities);
+                    break;
+
+                case "write w":
+                    if (DataBase.WriteWeatherInfo(weather))
+                        Console.WriteLine("Прогноз погоды успешно записан в базу данных");
+                    else
+                        Console.WriteLine("Во время записи прогноза погоды произошла ошибка. ");
+                    break;
+
+                case "":
+                    break;
+
+                default:
+                    Console.WriteLine("Неизвестная команда! Введите '?' для просмотра списка доступных команд...");
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Настраивает логгер для работы
+        /// </summary>
+        public static void LoggerConfig()
+        {
+            LoggingConfiguration config = new LoggingConfiguration();
+
+            FileTarget fileTarget = new FileTarget();
+            config.AddTarget("file", fileTarget);
+
+            fileTarget.DeleteOldFileOnStartup = true; // Удалатья страый файл при запуске
+            fileTarget.KeepFileOpen = false; //Держать файл открытым
+            fileTarget.ConcurrentWrites = true; //
+            fileTarget.Encoding = Encoding.GetEncoding(1251); // Кодировка файла логгера
+            fileTarget.ArchiveEvery = FileArchivePeriod.Day; // Период архивирования старых логов
+            fileTarget.Layout = NLog.Layouts.Layout.FromString("${longdate} | ${uppercase:${level}} | ${message}"); // Структура сообщения
+            fileTarget.FileName = NLog.Layouts.Layout.FromString("${basedir}/logs/${shortdate}.log"); //Структура названия файлов
+            fileTarget.ArchiveFileName = NLog.Layouts.Layout.FromString("${basedir}/logs/archives/{shortdate}.rar"); // Структура названия архивов
+
+            LoggingRule ruleFile = new LoggingRule("*", LogLevel.Trace, fileTarget); // Минимальный уровень логгирования - Trace
+            config.LoggingRules.Add(ruleFile);
+
+            LogManager.Configuration = config;
+        }
+
         #region EventHandlers
         public static void parser_WeatherParsed(object sender, WeatherParsedEventArgs e)
         {
             if (!e.HasError)
             {
-                WeatherInfoCityList.Add(e);
+                DataBase.WriteWeatherInfo(e.WeatherItem);
             }
             else
             {
@@ -231,30 +417,7 @@ namespace GisMeteoWeather
         }
 
         #endregion
-        /*#region Logger Setting
-        // Настройка логгера
-        public static void LoggerConfig()
-        {
-            LoggingConfiguration config = new LoggingConfiguration();
-
-            FileTarget fileTarget = new FileTarget();
-            config.AddTarget("file", fileTarget);
-
-            fileTarget.DeleteOldFileOnStartup = true; // Удалатья страый файл при запуске
-            fileTarget.KeepFileOpen = false; //Держать файл открытым
-            fileTarget.ConcurrentWrites = true; //
-            fileTarget.Encoding = Encoding.Unicode; // Кодировка файла логгера
-            fileTarget.ArchiveEvery = FileArchivePeriod.Day; // Период архивирования старых логов
-            fileTarget.Layout = NLog.Layouts.Layout.FromString("${longdate} | ${uppercase:${level}} | ${message}"); // Структура сообщения
-            fileTarget.FileName = NLog.Layouts.Layout.FromString("${basedir}/logs/${shortdate}.log"); //Структура названия файлов
-            fileTarget.ArchiveFileName = NLog.Layouts.Layout.FromString("${basedir}/logs/archives/{shortdate}.rar"); // Структура названия архивов
-
-            LoggingRule ruleFile = new LoggingRule("*", LogLevel.Trace, fileTarget); // Минимальный уровень логгирования - Trace
-            config.LoggingRules.Add(ruleFile);
-
-            LogManager.Configuration = config;
-        }
-        #endregion
-        */
+   
+        
     }
 }

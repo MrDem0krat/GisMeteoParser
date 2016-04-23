@@ -10,6 +10,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GisMeteoWeather", "GisMeteo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parser", "Parser\Parser.csproj", "{D757EA5B-012E-4E4C-BC0C-0B31573F8452}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataBaseWeather", "DataBaseWeather\DataBaseWeather.csproj", "{075D17F3-153A-480D-99DA-3B06D1D03709}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D757EA5B-012E-4E4C-BC0C-0B31573F8452} = {D757EA5B-012E-4E4C-BC0C-0B31573F8452}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,6 +29,10 @@ Global
 		{D757EA5B-012E-4E4C-BC0C-0B31573F8452}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D757EA5B-012E-4E4C-BC0C-0B31573F8452}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D757EA5B-012E-4E4C-BC0C-0B31573F8452}.Release|Any CPU.Build.0 = Release|Any CPU
+		{075D17F3-153A-480D-99DA-3B06D1D03709}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{075D17F3-153A-480D-99DA-3B06D1D03709}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{075D17F3-153A-480D-99DA-3B06D1D03709}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{075D17F3-153A-480D-99DA-3B06D1D03709}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

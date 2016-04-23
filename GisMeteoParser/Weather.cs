@@ -63,11 +63,16 @@ namespace GisMeteoWeather
         /// Скорость ветра
         /// </summary>
         public float WindSpeed { get; set; }
+
+        /// <summary>
+        /// Время обновления данных
+        /// </summary>
+        public DateTime RefreshTime { get; set; }
         #endregion
 
         #region Конструкоры
         public Weather() { }
-        public Weather(int cityID, DateTime date, DayPart partOfDay, string condition, int humidity, int pressure, int temperature, string type, string windDirection, float windSpeed)
+        public Weather(int cityID, DateTime date, DayPart partOfDay, string condition, int humidity, int pressure, int temperature, int temperatureFeel, string type, string windDirection, float windSpeed, DateTime refreshTime)
         {
             CityID = cityID;
             Date = date;
@@ -76,9 +81,11 @@ namespace GisMeteoWeather
             Humidity = humidity;
             Pressure = pressure;
             Temperature = temperature;
+            TemperatureFeel = temperatureFeel;
             TypeImage = type;
             WindDirection = windDirection;
             WindSpeed = windSpeed;
+            RefreshTime = refreshTime;
         }
         #endregion
         public override string ToString()

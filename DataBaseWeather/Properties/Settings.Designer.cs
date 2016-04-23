@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace GisMeteoWeather.Properties {
+namespace DataBaseWeather.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
@@ -23,78 +23,69 @@ namespace GisMeteoWeather.Properties {
             }
         }
         
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0KHQsNGI0LAsINGC0Ysg0Y7QstC10LvQuNGAIQ==")]
+        [global::System.Configuration.DefaultSettingValueAttribute("wOkg4u7t8iDx7+jqIPTw7uwg7ODpIPXg8PIg6O0g6O3j6+j4")]
         public string AdditionalEntropy {
             get {
                 return ((string)(this["AdditionalEntropy"]));
+            }
+            set {
+                this["AdditionalEntropy"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("localhost")]
-        public string DBServer {
+        public string Server {
             get {
-                return ((string)(this["DBServer"]));
+                return ((string)(this["Server"]));
             }
             set {
-                this["DBServer"] = value;
+                this["Server"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("3306")]
-        public uint DBPort {
+        public uint Port {
             get {
-                return ((uint)(this["DBPort"]));
+                return ((uint)(this["Port"]));
             }
             set {
-                this["DBPort"] = value;
+                this["Port"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("root")]
-        public string DBUser {
+        public string User {
             get {
-                return ((string)(this["DBUser"]));
+                return ((string)(this["User"]));
             }
             set {
-                this["DBUser"] = value;
+                this["User"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string DBPassword {
+        public string Password {
             get {
-                return ((string)(this["DBPassword"]));
+                return ((string)(this["Password"]));
             }
             set {
-                this["DBPassword"] = value;
+                this["Password"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("GismeteoWeather")]
-        public string DBName {
-            get {
-                return ((string)(this["DBName"]));
-            }
-            set {
-                this["DBName"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Weather")]
+        [global::System.Configuration.DefaultSettingValueAttribute("weather")]
         public string TableWeatherName {
             get {
                 return ((string)(this["TableWeatherName"]));
@@ -106,13 +97,25 @@ namespace GisMeteoWeather.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("City")]
+        [global::System.Configuration.DefaultSettingValueAttribute("cities")]
         public string TableCityName {
             get {
                 return ((string)(this["TableCityName"]));
             }
             set {
                 this["TableCityName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("gismeteo_weather")]
+        public string DBName {
+            get {
+                return ((string)(this["DBName"]));
+            }
+            set {
+                this["DBName"] = value;
             }
         }
     }

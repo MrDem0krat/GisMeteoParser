@@ -66,6 +66,11 @@ namespace ParserLib
         /// Скорость ветра
         /// </summary>
         float WindSpeed { get; set; }
+
+        /// <summary>
+        /// Время обновления данных
+        /// </summary>
+        DateTime RefreshTime { get; set; }
     }
 
     /// <summary>

@@ -1,21 +1,24 @@
-﻿using NLog;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using NLog;
+using ParserLib;
+using System.Security.Cryptography;
 using MySql.Data;
 using MySql.Data.MySqlClient;
 
-namespace GisMeteoWeather
+
+namespace DataBaseWeather
 {
     /// <summary>
     /// Обслуживающий класс для работы с базой данных
     /// </summary>
-    public static class DataBase // Вынести в отдельную библиотеку, чтобы была возможность подтянуть код в службу
+    public static class DataBase
     {
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
+        public static Logger _logger = LogManager.GetCurrentClassLogger();
+
         /// <summary>
         /// Перечисление доступных для создания типов таблиц базы данных
         /// </summary>
@@ -43,32 +46,32 @@ namespace GisMeteoWeather
         /// </summary>
         public static string Server
         {
-            get { return Properties.Settings.Default.DBServer; }
-            set { Properties.Settings.Default.DBServer = value; }
+            get { return Properties.Settings.Default.Server; }
+            set { Properties.Settings.Default.Server = value; }
         }
         /// <summary>
         /// Порт для подключения к серверу MySQL
         /// </summary>
         public static uint Port
         {
-            get { return Properties.Settings.Default.DBPort; }
-            set { Properties.Settings.Default.DBPort = value; }
+            get { return Properties.Settings.Default.Port; }
+            set { Properties.Settings.Default.Port = value; }
         }
         /// <summary>
         /// Имя пользователя для подключения к серверу MySQL
         /// </summary>
         public static string Username
         {
-            get { return Properties.Settings.Default.DBUser; }
-            set { Properties.Settings.Default.DBUser = value; }
+            get { return Properties.Settings.Default.User; }
+            set { Properties.Settings.Default.User = value; }
         }
         /// <summary>
         /// Пароль для доступа к серверу MySQL
         /// </summary>
         public static string Password
         {
-            private get { return DecodePassword(Properties.Settings.Default.DBPassword); }
-            set { Properties.Settings.Default.DBPassword = EncodePassword(value); }
+            private get { return DecodePassword(Properties.Settings.Default.Password); }
+            set { Properties.Settings.Default.Password = EncodePassword(value); }
         }
 
         /// <summary>
@@ -210,7 +213,7 @@ namespace GisMeteoWeather
             MySqlConnection connection = Connect();
 
             return CheckDataBase(database, connection);
-           
+
         }
         /// <summary>
         /// Проверяет наличие базы данных на сервере
@@ -227,8 +230,8 @@ namespace GisMeteoWeather
 
             try
             {
-                if(connection.State != System.Data.ConnectionState.Open)
-                    connection.Open();      
+                if (connection.State != System.Data.ConnectionState.Open)
+                    connection.Open();
                 reader = command.ExecuteReader();
                 if (reader.HasRows)
                 {
@@ -325,9 +328,9 @@ namespace GisMeteoWeather
         /// <returns></returns>
         public static bool CheckTable(TableType table, MySqlConnection connection)
         {
-            MySqlCommand command= new MySqlCommand("SHOW TABLES", connection);
+            MySqlCommand command = new MySqlCommand("SHOW TABLES", connection);
             List<string> result = new List<string>();
-            string _tableName  = "";
+            string _tableName = "";
 
             switch (table)
             {
@@ -349,7 +352,7 @@ namespace GisMeteoWeather
                         result.Add(reader.GetString(0));
                 reader.Close();
                 Disconnect(connection);
-                if(result.Contains(_tableName))
+                if (result.Contains(_tableName))
                 {
                     _logger.Debug("Таблица '{0}' уже имеется в базе '{1}'", _tableName, connection.Database);
                     return true;
@@ -396,7 +399,7 @@ namespace GisMeteoWeather
         {
             MySqlConnection connection = Connect();
             database = database.ToLower();
-            MySqlCommand command = new MySqlCommand("CREATE DATABASE " + database, connection);
+            MySqlCommand command = new MySqlCommand("CREATE DATABASE " + database + " CHARACTER SET cp1251 COLLATE cp1251_general_ci", connection);
 
             try
             {
@@ -470,8 +473,8 @@ namespace GisMeteoWeather
                                     )
                                 ENGINE = INNODB
                                 AUTO_INCREMENT = 1
-                                CHARACTER SET utf8
-                                COLLATE utf8_general_ci;",
+                                CHARACTER SET cp1251
+                                COLLATE cp1251_general_ci;",
                                     connection.Database, _tableName));//можно перенести текст запроса в ресурсы
                         isAlreadyExist = CheckTable(TableType.Weather, connection);
                         break;
@@ -479,18 +482,18 @@ namespace GisMeteoWeather
                         _tableName = Properties.Settings.Default.TableCityName.ToLower();
                         command = new MySqlCommand(string.Format(@"CREATE TABLE {0}.{1} (
                                     ID int(10) UNSIGNED NOT NULL, 
-                                    Name varchar(50) DEFAULT NULL,
+                                    Name varchar(50) CHARACTER SET cp1251 COLLATE cp1251_general_ci DEFAULT NULL,
                                     PRIMARY KEY (ID)
                                     )
                                 ENGINE = INNODB
                                 AUTO_INCREMENT = 1
-                                CHARACTER SET utf8
-                                COLLATE utf8_general_ci;",
+                                CHARACTER SET cp1251
+                                COLLATE cp1251_general_ci;",
                                     connection.Database, _tableName));//можно перенести текст запроса в ресурсы
                         isAlreadyExist = CheckTable(TableType.City, connection);
                         break;
                 }
-            
+
                 if (!isAlreadyExist)
                 {
                     if (connection.State != System.Data.ConnectionState.Open)
@@ -541,7 +544,7 @@ namespace GisMeteoWeather
         {
             MySqlConnection connection = Connect();
 
-            if (!CheckDataBase(Properties.Settings.Default.DBName,connection))
+            if (!CheckDataBase(Properties.Settings.Default.DBName, connection))
                 CreateDataBase(Properties.Settings.Default.DBName);
             Disconnect(connection);
 
@@ -604,8 +607,8 @@ namespace GisMeteoWeather
             command.Parameters["@Date"].Value = weather.Date.Date;
             command.Parameters.Add("@DayPart", MySqlDbType.VarChar);
             command.Parameters["@DayPart"].Value = weather.PartOfDay.ToString();
-            command.Parameters.Add("@Temerature", MySqlDbType.Int32);
-            command.Parameters["@Temerature"].Value = weather.Temperature;
+            command.Parameters.Add("@Temperature", MySqlDbType.Int32);
+            command.Parameters["@Temperature"].Value = weather.Temperature;
             command.Parameters.Add("@TemperatureFeel", MySqlDbType.Int32);
             command.Parameters["@TemperatureFeel"].Value = weather.TemperatureFeel;
             command.Parameters.Add("@Condition", MySqlDbType.VarChar);
@@ -621,20 +624,20 @@ namespace GisMeteoWeather
             command.Parameters.Add("@WindSpeed", MySqlDbType.Float);
             command.Parameters["@WindSpeed"].Value = weather.WindSpeed;
             command.Parameters.Add("@RefreshTime", MySqlDbType.DateTime);
-            command.Parameters["@RefreshTime"].Value = DateTime.Now; //Временно так, позже добавить в IWeatherInfo свойство RefreshTime
+            command.Parameters["@RefreshTime"].Value = weather.RefreshTime;
 
             try
             {
                 _logger.Debug("Пробуем записать данные о погоде для г.{0} на {1} - {2}", weather.CityID, weather.Date.ToShortDateString(), weather.PartOfDay);
                 command.Connection = Connect(Properties.Settings.Default.DBName);
                 command.ExecuteNonQuery();
-                _logger.Debug("Запись {0}: {1} - {2} успешно добавлена в базу", weather.CityID, weather.Date.ToShortDateString(),weather.PartOfDay);
+                _logger.Debug("Запись {0}: {1} - {2} успешно добавлена в базу", weather.CityID, weather.Date.ToShortDateString(), weather.PartOfDay);
                 Disconnect(command.Connection);
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error("При добавлении записи {0}: {1} - {2} произошла ошибка: {3}", weather.CityID, weather.Date.ToShortDateString(),weather.PartOfDay, ex.Message);
+                _logger.Error("При добавлении записи {0}: {1} - {2} произошла ошибка: {3}", weather.CityID, weather.Date.ToShortDateString(), weather.PartOfDay, ex.Message);
                 Disconnect(command.Connection);
             }
             return false;
@@ -647,7 +650,7 @@ namespace GisMeteoWeather
         {
             MySqlCommand command = new MySqlCommand();
 
-            command.CommandText = string.Format("INSERT INTO {0} (ID, Name) VALUES (@ID, @Name)",Properties.Settings.Default.TableCityName.ToLower());
+            command.CommandText = string.Format("INSERT INTO {0} (ID, Name) VALUES (@ID, @Name)", Properties.Settings.Default.TableCityName.ToLower());
             command.Parameters.Add("@ID", MySqlDbType.UInt32);
             command.Parameters.Add("@Name", MySqlDbType.VarChar);
 
@@ -658,24 +661,64 @@ namespace GisMeteoWeather
 
                 foreach (var city in cities)
                 {
-                    var bibi1251 = Encoding.GetEncoding(1251);
-                    var bobo = Encoding.UTF8.GetBytes(city.Value);
+
+                    // var bibi1251 = Encoding.GetEncoding(1251).GetBytes(city.Value);
+                    // var bobo = Encoding.UTF8.GetString(bibi1251);
+
 
                     command.Parameters["@ID"].Value = city.Key;
-                    command.Parameters["@Name"].Value = bibi1251.GetString(bobo);
-                        
+                    command.Parameters["@Name"].Value = city.Value;//bobo;
+
                     command.ExecuteNonQuery();
                 }
                 _logger.Debug("Список городов успешно записан в базу данных");
                 Disconnect(command.Connection);
                 return true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.Debug("Во время записи списка городов произошла ошибка: {0}", ex.Message);
                 Disconnect(command.Connection);
             }
             return false;
-        } 
+        }
+
+        public static Dictionary<int, string> ReadCityList()
+        {
+            Dictionary<int, string> result = new Dictionary<int, string>();
+            List<string> lit = new List<string>();
+            MySqlConnection connection = Connect(Properties.Settings.Default.DBName);
+            MySqlCommand command = new MySqlCommand("SELECT * FROM " + Properties.Settings.Default.TableCityName, connection);
+
+            if (connection.State != System.Data.ConnectionState.Open)
+                connection.Open();
+
+            var reader = command.ExecuteReader();
+            if (reader.HasRows)
+                while (reader.Read())
+                {
+                    result.Add(int.Parse(reader.GetValue(0).ToString()), reader.GetValue(1).ToString());
+                    //reader.Read();
+                    ////lit.Add(reader.GetString(0));
+                    //Console.WriteLine("GetString: " + reader.GetString(0));
+                    //Console.WriteLine("FieldCount: " + reader.FieldCount);
+                    //Console.WriteLine("GetFieldType(0): " + reader.GetFieldType(0));
+                    //Console.WriteLine("GetFieldType(1): " + reader.GetFieldType(1));
+                    ////Console.WriteLine("GetFieldValue<int>(0): " + reader.GetFieldValue<int>(0));
+                    ////Console.WriteLine("GetFieldValue<string>(1): " + reader.GetFieldValue<string>(1));
+                    //Console.WriteLine("GetName(0): " + reader.GetName(0));
+                    //Console.WriteLine("GetName(1): " + reader.GetName(1));
+                    //Console.WriteLine("GetValue(0): " + reader.GetValue(0));
+                    //Console.WriteLine("GetValue(1): " + reader.GetValue(1));
+                    //Console.WriteLine("ToString(): " + reader.ToString());
+                }
+            return result;
+        }
+
+        public static void SaveSettings()
+        {
+            Properties.Settings.Default.Save();
+            _logger.Debug("Настроки MySQL подключения успешно сохранены");
+        }
     }
 }
