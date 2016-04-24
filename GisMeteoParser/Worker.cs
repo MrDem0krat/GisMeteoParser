@@ -10,6 +10,8 @@ using ParserLib;
 using DataBaseWeather;
 using NLog.Config;
 using NLog.Targets;
+using Weather;
+
 
 namespace GisMeteoWeather
 {
@@ -19,16 +21,14 @@ namespace GisMeteoWeather
     public class Worker
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
-        private static Dictionary<int, string> cities = new Dictionary<int, string>();//необходис?
-        private static IWeatherInfo weather = new Weather(123, DateTime.Now, DayPart.Morning, "cool", 75, 768, 25, 28, "ololo,", "south", 2.1f, DateTime.Now); //test
+        private static Dictionary<int, string> cities = new Dictionary<int, string>();
         private static Parser parser = new Parser();
 
         /// <summary>
         /// Список полученных прогнозов
         /// </summary>
-        public static List<WeatherParsedEventArgs> WeatherInfoCityList { get; private set; }
+        public static List<WeatherItem> WeatherInfoList { get; private set; }
         
-        //Добавить выбрасывание исключений при невозможности чего-то прочитать
         /// <summary>
         /// Функция выборки данных прогноза на заданный день в заданное время суток
         /// </summary>
@@ -36,9 +36,9 @@ namespace GisMeteoWeather
         /// <param name="dayToParse">Требуемый день</param>
         /// <param name="partOfDay">Требуемое время суток</param>
         /// <returns>Возвращает объект, реализующий интерфейс IWeatherInfo</returns>
-        public static IWeatherInfo ParseWeatherData(HtmlDocument source, DayToParse dayToParse = DayToParse.Today, DayPart partOfDay = DayPart.Day) 
+        public static IWeatherItem ParseWeatherData(HtmlDocument source, DayToParse dayToParse = DayToParse.Today, DayPart partOfDay = DayPart.Day) 
         {
-            Weather _weather = new Weather();
+            WeatherItem _weather = new WeatherItem();
             bool HasError = false;
             DateTime _date = new DateTime();
             int _humidity = 0;
@@ -61,7 +61,7 @@ namespace GisMeteoWeather
                         if (DateTime.TryParse(DateRegex.Match(_dateTitle).Value, out _date))
                             _weather.Date = _date;
                         else
-                            HasError = true;
+                            throw new Exception("Error while parsing Date");
 
                     //PartOfDay
                     _weather.PartOfDay = partOfDay;
@@ -71,7 +71,7 @@ namespace GisMeteoWeather
                     if (ConditionNode != null)
                         _weather.Condition = ConditionNode.InnerText;
                     else
-                        HasError = true;
+                        throw new Exception("Error while parsing Condition");
 
                     //TypeImage
                     HtmlNode TypeImageNode = DayPartWeatherInfoNode.Elements("td").Where(x => x.GetAttributeValue("class", "") == "clicon").FirstOrDefault().FirstChild;
@@ -81,7 +81,7 @@ namespace GisMeteoWeather
                         _weather.TypeImage = _typeImage.Substring(_typeImage.LastIndexOf("/") + 1);
                     }
                     else
-                        HasError = true;
+                        throw new Exception("Error while parsing TypeImage");
 
                     //Temperature
                     HtmlNode TemperatureNode = DayPartWeatherInfoNode.Elements("td").Where(x => x.GetAttributeValue("class", "") == "temp").FirstOrDefault();
@@ -92,7 +92,7 @@ namespace GisMeteoWeather
                             if (int.TryParse(TemperatureNode.InnerText, out _temperature))
                                 _weather.Temperature = _temperature;
                             else
-                                HasError = true;
+                                throw new Exception("Error while parsing Temperature");
                     }
 
                     var OtherNodes = DayPartWeatherInfoNode.Elements("td").Where(x => x.HasAttributes == false);
@@ -105,7 +105,9 @@ namespace GisMeteoWeather
                             if (int.TryParse(PressureNode.InnerText, out _pressure))
                                 _weather.Pressure = _pressure;
                             else
-                                HasError = true;
+                                throw new Exception("Error while parsing Pressure");
+
+                        HasError = true;
                     }
 
                     //Wind
@@ -116,7 +118,7 @@ namespace GisMeteoWeather
                         if (float.TryParse(WindNode.Element("dd").Elements("span").Where(x => x.GetAttributeValue("class", "").EndsWith("ms")).FirstOrDefault().InnerText, out _windSpeed))
                             _weather.WindSpeed = _windSpeed;
                         else
-                            HasError = true;
+                            throw new Exception("Error while parsing Wind");
                     }
 
                     //Humidity
@@ -126,7 +128,7 @@ namespace GisMeteoWeather
                         if (int.TryParse(HumidityNode.InnerText, out _humidity))
                             _weather.Humidity = _humidity;
                         else
-                            HasError = true;
+                            throw new Exception("Error while parsing Humidity");
                     }
 
                     //TemperatureFeel
@@ -138,18 +140,22 @@ namespace GisMeteoWeather
                             if (int.TryParse(TempFeelNode.InnerText, out _temperatureFeel))
                                 _weather.TemperatureFeel = _temperatureFeel;
                             else
-                                HasError = true;
+                                throw new Exception("Error while parsing TemperatureFeel");
                     }
                 }
                 else
-                    _logger.Error("Error:\tElements not found!");
-                return _weather;
+                    throw new Exception("Error: Elements not found!");
             }
             catch(Exception ex)
             {
+                HasError = true;
                 _logger.Error("Error: "+ ex.Message);
-                return new Weather();
             }
+
+            if (!HasError)
+                return _weather;
+            else
+                return new WeatherItem();
         }
 
         /// <summary>
@@ -161,13 +167,14 @@ namespace GisMeteoWeather
         {
             HtmlWeb _web = new HtmlWeb();
             Dictionary<int, string> _cityDictionary = new Dictionary<int, string>();
+            bool hasError = false;
             string _target = "https://www.gismeteo.ru";
             string buffer = "";
             int _id;
             List<string> wrapIdList = new List<string>() { "cities-teaser", "cities1", "cities2", "cities3" };
             Regex reg = new Regex(@"[\d]{1,}");
 
-            HtmlDocument _mainPage = Parser.DownloadPage(_target);//_web.Load(_target);
+            HtmlDocument _mainPage = Parser.DownloadPage(_target);
             try
             {
                 foreach (string wrapID in wrapIdList)
@@ -193,9 +200,13 @@ namespace GisMeteoWeather
             }
             catch (Exception ex)
             {
-                _logger.Debug("Can't get mai page city list: ", ex.Message);
+                hasError = true;
+                _logger.Error("Can't get main page city list: ", ex.Message);
             }
-            return _cityDictionary;
+            if (!hasError)
+                return _cityDictionary;
+            else
+                return new Dictionary<int, string>();
         }
 
         /// <summary>
@@ -204,8 +215,8 @@ namespace GisMeteoWeather
         public static void Setup()
         {
             LoggerConfig();
-            Worker.
             _logger.Debug("Приложение запущено");
+            _logger.Debug("Запущена проверка и подготовка необходимой базы данных");
             DataBase.Prepare(); 
             _logger.Debug("Проверка наличия новых городов на главной странице сайта");
             parser.Cities = GetCityList();
@@ -220,7 +231,7 @@ namespace GisMeteoWeather
                 }
             if(other.Count > 0)
             {
-                _logger.Debug("Доступны новые города в списке. Добавляю их в базу данных ");
+                _logger.Debug("Доступны новые города в списке. Добавляем их в базу данных ");
                 DataBase.WriteCityList(other);
             }
 
@@ -233,7 +244,7 @@ namespace GisMeteoWeather
             parser.ParserStarted += parser_Started;
             parser.ParserStopped += parser_Stopped;
             parser.ParserAsleep += parser_Asleep;
-
+            _logger.Debug("Парсер успешно настроен");
         }
 
         /// <summary>
@@ -244,13 +255,13 @@ namespace GisMeteoWeather
         {
             foreach (var item in source)
                 Console.WriteLine("ID: " + item.Key + "\tName: " + item.Value);
-        }
+        } //test; later remove
 
         /// <summary>
         /// Обработчик пользовательского ввода
         /// </summary>
         /// <param name="command"></param>
-        public static void RunCommand(string command)
+        public static void RunCommand(string command) //переделать, убрать отладочные функции
         {
             switch (command)
             {
@@ -262,22 +273,21 @@ namespace GisMeteoWeather
                         "{3,-20}Загрузить список городов с главной страницы\n"+
                         "{4,-20}Подготовить базу данных для работы\n"+
                         "{5,-20}Записать список городов в базу данных\n"+
-                        "{6,-20}Записать прогноз погоды в базу данных\n"+
                         "{7,-20}Ввести пароль к БД (root)\n" +
                         "{8,-20}Остановить парсер и закрыть приложение\n",
-                                        "start", "stop", "status", "load cl", "prepare", "write cl", "write w", "password", "exit");
+                                        "start", "stop", "status", "load cl", "prepare", "write cl", "password", "exit");
                     break;
 
                 case "exit":
                     Program.isRun = false;
-                    if (parser.Status == ParserStatus.Started || parser.Status == ParserStatus.Sleeping)
+                    if (parser.Status == ParserStatus.Working || parser.Status == ParserStatus.Sleeping)
                     {
                         parser.Stop();
                     }
                     break;
 
                 case "stop":
-                    if (parser.Status == ParserStatus.Started || parser.Status == ParserStatus.Sleeping)
+                    if (parser.Status == ParserStatus.Working || parser.Status == ParserStatus.Sleeping)
                     {
                         parser.Stop();
                     }
@@ -290,7 +300,9 @@ namespace GisMeteoWeather
                 case "start":
                     if (parser.Status == ParserStatus.Stoped || parser.Status == ParserStatus.Aborted)
                     {
+#pragma warning disable CS4014 // Так как этот вызов не ожидается, выполнение существующего метода продолжается до завершения вызова
                         parser.StartAsync();
+#pragma warning restore CS4014 // Так как этот вызов не ожидается, выполнение существующего метода продолжается до завершения вызова
                     }
                     else
                     {
@@ -315,7 +327,7 @@ namespace GisMeteoWeather
                     break;
 
                 case "load cl":
-                    cities = Worker.GetCityList();
+                    cities = GetCityList();
                     Console.WriteLine("Список городов успешно загружен.");
                     break;
 
@@ -335,13 +347,6 @@ namespace GisMeteoWeather
 
                 case "print cl":
                     Worker.PrintCityList(cities);
-                    break;
-
-                case "write w":
-                    if (DataBase.WriteWeatherInfo(weather))
-                        Console.WriteLine("Прогноз погоды успешно записан в базу данных");
-                    else
-                        Console.WriteLine("Во время записи прогноза погоды произошла ошибка. ");
                     break;
 
                 case "":
@@ -364,11 +369,11 @@ namespace GisMeteoWeather
             config.AddTarget("file", fileTarget);
 
             fileTarget.DeleteOldFileOnStartup = true; // Удалатья страый файл при запуске
-            fileTarget.KeepFileOpen = false; //Держать файл открытым
-            fileTarget.ConcurrentWrites = true; //
-            fileTarget.Encoding = Encoding.GetEncoding(1251); // Кодировка файла логгера
-            fileTarget.ArchiveEvery = FileArchivePeriod.Day; // Период архивирования старых логов
-            fileTarget.Layout = NLog.Layouts.Layout.FromString("${longdate} | ${uppercase:${level}} | ${message}"); // Структура сообщения
+            fileTarget.KeepFileOpen = false; //Не держать файл открытым
+            fileTarget.ConcurrentWrites = true; 
+            fileTarget.Encoding = Encoding.GetEncoding(1251); // Кодировка файла логов
+            fileTarget.ArchiveEvery = FileArchivePeriod.Day; // Период архивирования старых логов (нет смысла, если старый удаляется при запуске)
+            fileTarget.Layout = NLog.Layouts.Layout.FromString("${uppercase:${level}} | ${longdate} :\t${message}"); // Структура сообщения
             fileTarget.FileName = NLog.Layouts.Layout.FromString("${basedir}/logs/${shortdate}.log"); //Структура названия файлов
             fileTarget.ArchiveFileName = NLog.Layouts.Layout.FromString("${basedir}/logs/archives/{shortdate}.rar"); // Структура названия архивов
 
@@ -379,11 +384,16 @@ namespace GisMeteoWeather
         }
 
         #region EventHandlers
+        /// <summary>
+        /// Событие, информирующее о появлении новых полученных парсером данных
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e">Аргумент, хранящий в себе прогноз погоды и сведения об ошибках</param>
         public static void parser_WeatherParsed(object sender, WeatherParsedEventArgs e)
         {
             if (!e.HasError)
             {
-                DataBase.WriteWeatherInfo(e.WeatherItem);
+                WeatherInfoList.Add((WeatherItem)e.WeatherItem);
             }
             else
             {
@@ -393,29 +403,46 @@ namespace GisMeteoWeather
             }
         }
 
+        /// <summary>
+        /// Парсер начал работу
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         public static void parser_Started(object sender, EventArgs e)
         {
             _logger.Debug("Parser has been started");
             Console.WriteLine("Parser has been started");
         }
 
+        /// <summary>
+        /// Парсер закончил работу
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         public static void parser_Stopped(object sender, EventArgs e)
         {
-            //WeatherInfoCityList.Clear();
+            WeatherInfoList.Clear();
             _logger.Debug("Parser has been stopped");
             Console.WriteLine("Parser has been stopped");
 
         }
+
+        /// <summary>
+        /// Парсер уснул
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         public static void parser_Asleep(object sender, EventArgs e)
         {
-            
-            //write weather list to db
-            //WeatherInfoCityList.Clear();
+            foreach (var item in WeatherInfoList)
+            {
+                DataBase.WriteWeatherItem(item);
+            }
+            WeatherInfoList.Clear();
             _logger.Debug("Parser goes to sleep");
             Console.WriteLine("Parser goes to sleep");
 
         }
-
         #endregion
    
         

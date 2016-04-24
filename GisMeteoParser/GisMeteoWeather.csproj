@@ -93,7 +93,6 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="Weather.cs" />
     <Compile Include="Worker.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -119,6 +118,10 @@
     <ProjectReference Include="..\Parser\Parser.csproj">
       <Project>{d757ea5b-012e-4e4c-bc0c-0b31573f8452}</Project>
       <Name>Parser</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Weather\Weather.csproj">
+      <Project>{bb380125-9dc7-4fb4-8a47-e084d699d285}</Project>
+      <Name>Weather</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

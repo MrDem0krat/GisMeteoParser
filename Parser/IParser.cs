@@ -9,7 +9,7 @@ namespace ParserLib
     public interface IParser : IDisposable
     {
         /// <summary>
-        /// Событие готовых данных, полученных от парсера. На это событие может кто-то подписаться и обрабатывать нотификацию, чтобы что-то сделать с полученными данными.
+        /// Событие, информирующее о получении новых данных парсером.
         /// </summary>
         event EventHandler<WeatherParsedEventArgs> WeatherParsed;
         /// <summary>
@@ -46,7 +46,7 @@ namespace ParserLib
     public enum ParserStatus
     {
         Stoped = 0,
-        Started = 1,
+        Working = 1,
         Sleeping = 2,
         Aborted = 3
     }

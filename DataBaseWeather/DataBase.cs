@@ -8,6 +8,7 @@ using ParserLib;
 using System.Security.Cryptography;
 using MySql.Data;
 using MySql.Data.MySqlClient;
+using Weather;
 
 
 namespace DataBaseWeather
@@ -581,7 +582,7 @@ namespace DataBaseWeather
         /// Записывает сведения о погоде в базу данных
         /// </summary>
         /// <param name="weather">Прогноз, который требуется записать</param>
-        public static bool WriteWeatherInfo(ParserLib.IWeatherInfo weather)
+        public static bool WriteWeatherItem(IWeatherItem weather)
         {
             MySqlCommand command = new MySqlCommand();
             command.CommandText = string.Format(@"INSERT INTO {0} (ID, City_ID, Date, DayPart, Temperature, TemperatureFeel, `Condition`, TypeImage, Humidity, Pressure, WindDirection, WindSpeed, RefreshTime)

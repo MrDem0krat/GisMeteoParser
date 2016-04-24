@@ -2,11 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using NLog;
 using System.Net;
+using Weather;
 
 namespace ParserLib
 {
@@ -19,7 +19,7 @@ namespace ParserLib
         public event EventHandler ParserAsleep; //Парсер в режиме ожидания
         public event EventHandler ParserStopped; //Парсер остановлен
 
-        public delegate IWeatherInfo ParserGetDataHandler(HtmlDocument _source, DayToParse dayToParse = DayToParse.Tomorrow, DayPart dayPart = DayPart.Day);
+        public delegate IWeatherItem ParserGetDataHandler(HtmlDocument _source, DayToParse dayToParse = DayToParse.Tomorrow, DayPart dayPart = DayPart.Day);
 
         private static Logger _logger = LogManager.GetCurrentClassLogger();
 
@@ -145,7 +145,7 @@ namespace ParserLib
         /*
         public void Start(params string[] prms)
         {
-            Status = ParserStatus.Started;
+            Status = ParserStatus.Working;
             if(ParserStarted != null)
             {
                 ParserStarted(this, new EventArgs());
@@ -195,8 +195,8 @@ namespace ParserLib
             }
             string _errorText = String.Empty;
             Exception ex = null;
-            IWeatherInfo weather;
-            Status = ParserStatus.Started;
+            IWeatherItem weather;
+            Status = ParserStatus.Working;
             await Task.Run(() =>
             {
                 parserThread = Thread.CurrentThread;
@@ -204,7 +204,7 @@ namespace ParserLib
                 {
                     while (true)
                     {
-                        Status = ParserStatus.Started;
+                        Status = ParserStatus.Working;
                         if (CheckConnection())
                         {
                             if (parserHandler != null)
@@ -239,7 +239,7 @@ namespace ParserLib
                 }
                 catch (ThreadAbortException)
                 {
-                    if (Status == ParserStatus.Started)
+                    if (Status == ParserStatus.Working)
                     {
                         Console.WriteLine("Parser has been aborted while working. Writing info to database cancelled.");
                         Status = ParserStatus.Aborted;
