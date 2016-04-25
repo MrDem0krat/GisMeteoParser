@@ -4,12 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using NLog;
-using ParserLib;
 using System.Security.Cryptography;
-using MySql.Data;
 using MySql.Data.MySqlClient;
 using Weather;
-
+using System.Data;
 
 namespace DataBaseWeather
 {
@@ -33,6 +31,26 @@ namespace DataBaseWeather
             /// Таблица для хранения списка городов
             /// </summary>
             City
+        }
+
+        /// <summary>
+        /// Структура таблицы Weather
+        /// </summary>
+        private enum WeatherTableColumn
+        {
+            ID = 0,
+            City_ID = 1,
+            Date = 2,
+            DayPart = 3,
+            Temperature = 4,
+            TemperatureFeel = 5,
+            Condition = 6,
+            TypeImage = 7,
+            Humidity = 8,
+            Pressure = 9,
+            WindDirection = 10,
+            WindSpeed = 11,
+            RefreshTime = 12
         }
 
         /// <summary>
@@ -684,38 +702,118 @@ namespace DataBaseWeather
             return false;
         }
 
+        /// <summary>
+        /// Возвращает список городов, прочитанных из базы данных
+        /// </summary>
+        /// <returns>Список городов, хранящий ID и название города</returns>
         public static Dictionary<int, string> ReadCityList()
         {
             Dictionary<int, string> result = new Dictionary<int, string>();
-            List<string> lit = new List<string>();
             MySqlConnection connection = Connect(Properties.Settings.Default.DBName);
             MySqlCommand command = new MySqlCommand("SELECT * FROM " + Properties.Settings.Default.TableCityName, connection);
-
-            if (connection.State != System.Data.ConnectionState.Open)
+            if (connection.State != ConnectionState.Open)
                 connection.Open();
 
             var reader = command.ExecuteReader();
             if (reader.HasRows)
                 while (reader.Read())
                 {
-                    result.Add(int.Parse(reader.GetValue(0).ToString()), reader.GetValue(1).ToString());
-                    //reader.Read();
-                    ////lit.Add(reader.GetString(0));
-                    //Console.WriteLine("GetString: " + reader.GetString(0));
-                    //Console.WriteLine("FieldCount: " + reader.FieldCount);
-                    //Console.WriteLine("GetFieldType(0): " + reader.GetFieldType(0));
-                    //Console.WriteLine("GetFieldType(1): " + reader.GetFieldType(1));
-                    ////Console.WriteLine("GetFieldValue<int>(0): " + reader.GetFieldValue<int>(0));
-                    ////Console.WriteLine("GetFieldValue<string>(1): " + reader.GetFieldValue<string>(1));
-                    //Console.WriteLine("GetName(0): " + reader.GetName(0));
-                    //Console.WriteLine("GetName(1): " + reader.GetName(1));
-                    //Console.WriteLine("GetValue(0): " + reader.GetValue(0));
-                    //Console.WriteLine("GetValue(1): " + reader.GetValue(1));
-                    //Console.WriteLine("ToString(): " + reader.ToString());
+                    result.Add(reader.GetInt32(0), reader.GetString(1));
                 }
+            else
+                _logger.Debug("No data found while reading cities list from database");
+            reader.Close();
+            connection.Close();
             return result;
         }
 
+        /// <summary>
+        /// Возвращает из базы данных название города по его id
+        /// </summary>
+        /// <param name="id">ID города для поиска</param>
+        /// <returns>Возвращает строку с названием города либо пустую строку</returns>
+        public static string GetCityNameByID(int id)
+        {
+            Dictionary<int, string> daaaa = ReadCityList();
+            bool isFound = false;
+
+            var cityName = from c in daaaa where c.Key == id select c.Value;
+            if (cityName.ToArray().Count() != 0)
+                isFound = true;
+
+            return isFound? cityName.ToArray().First() : "";
+        }
+
+        /// <summary>
+        /// Читает из базы данных актуальный (последний из полученных) прогноз для указанного города в указанный день и время суток
+        /// </summary>
+        /// <param name="cityID">ID города</param>
+        /// <param name="date">Дата прогноза</param>
+        /// <param name="dayPart">Время суток</param>
+        /// <returns></returns>
+        public static IWeatherItem GetWeatherItem(int cityID, DateTime date, DayPart dayPart)
+        {
+            MySqlCommand command = new MySqlCommand();
+            WeatherItem weather = new WeatherItem();
+            List<WeatherItem> readerResult = new List<WeatherItem>();
+            command.CommandText = string.Format("SELECT * FROM {0}.{1) WHERE City_ID={3}", Properties.Settings.Default.DBName, Properties.Settings.Default.TableWeatherName, cityID); 
+            using (var connection = Connect(Properties.Settings.Default.DBName))
+            {
+                if (connection.State != ConnectionState.Open)
+                    connection.Open();
+                command.Connection = connection;
+                var reader = command.ExecuteReader();
+
+                if(reader.HasRows)
+                    while(reader.Read())
+                    {
+                        weather.CityID = reader.GetInt32((int)WeatherTableColumn.City_ID);
+                        weather.Date = reader.GetDateTime((int)WeatherTableColumn.Date);
+                        switch (reader.GetString((int)WeatherTableColumn.DayPart))
+                        {
+                            case "Night":
+                                weather.PartOfDay = DayPart.Night;
+                                break;
+                            case "Morning":
+                                weather.PartOfDay = DayPart.Morning;
+                                break;
+                            case "Day":
+                                weather.PartOfDay = DayPart.Day;
+                                break;
+                            case "Evening":
+                                weather.PartOfDay = DayPart.Evening;
+                                break;
+                            default:
+                                break;
+                        }
+                        weather.Temperature = reader.GetInt32((int)WeatherTableColumn.Temperature);
+                        weather.TemperatureFeel = reader.GetInt32((int)WeatherTableColumn.TemperatureFeel);
+                        weather.Condition = reader.GetString((int)WeatherTableColumn.Condition);
+                        weather.TypeImage = reader.GetString((int)WeatherTableColumn.TypeImage);
+                        weather.Humidity = reader.GetInt32((int)WeatherTableColumn.Humidity);
+                        weather.Pressure = reader.GetInt32((int)WeatherTableColumn.Pressure);
+                        weather.WindDirection = reader.GetString((int)WeatherTableColumn.WindDirection);
+                        weather.WindSpeed = reader.GetFloat((int)WeatherTableColumn.WindSpeed);
+                        weather.RefreshTime = reader.GetDateTime((int)WeatherTableColumn.RefreshTime);
+
+                        readerResult.Add(weather);
+                        weather = new WeatherItem();
+                    }
+                reader.Close();
+                connection.Close();
+            }
+
+            weather = (from w in readerResult select w).Where(x => x.RefreshTime == (from we in readerResult select we).Max(m => m.RefreshTime)).First();
+
+            readerResult.Clear();
+            command.Dispose();
+
+            return weather;
+        }
+
+        /// <summary>
+        /// Сохраняет настройки подключения к базе данных
+        /// </summary>
         public static void SaveSettings()
         {
             Properties.Settings.Default.Save();

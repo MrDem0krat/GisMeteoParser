@@ -22,6 +22,9 @@ namespace GisMeteoWeather
             Worker.Setup();
 
             Console.WriteLine(">>>\tGismeteo weather parser\t<<<\n\nWrite 'help' to view available commands list...");
+
+            Console.WriteLine("4258 city is {0}", DataBaseWeather.DataBase.GetCityNameByID(4258));
+            Console.WriteLine("4368 city is {0}", DataBaseWeather.DataBase.GetCityNameByID(4368));
             while (isRun)
             {
                 answer = Console.ReadLine().ToLower();

@@ -82,9 +82,13 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DataBaseWeather\DataBaseWeather.csproj">
+    <ProjectReference Include="..\DataBaseWeather\DataBaseLib.csproj">
       <Project>{075d17f3-153a-480d-99da-3b06d1d03709}</Project>
-      <Name>DataBaseWeather</Name>
+      <Name>DataBaseLib</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Weather\WeatherLib.csproj">
+      <Project>{bb380125-9dc7-4fb4-8a47-e084d699d285}</Project>
+      <Name>WeatherLib</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
