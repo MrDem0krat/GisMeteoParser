@@ -14,7 +14,7 @@ namespace GismeteoClient
     public static class Settings
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
-
+        
         /// <summary>
         /// Настраивает параметры ведения лога приложения
         /// </summary>

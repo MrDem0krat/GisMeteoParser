@@ -1,0 +1,87 @@
+﻿<Window x:Class="GismeteoClient.SettingsWnd"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GismeteoClient"
+        mc:Ignorable="d"
+        Title="Настройки" Height="315.148" Width="480" Background="#FF237FAC" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True" WindowStartupLocation="CenterOwner" ScrollViewer.VerticalScrollBarVisibility="Disabled" Icon="pack://siteoforigin:,,,/Resources/graphics/SettingsWindowIcon.ico">
+    <Window.Resources>
+        <Style x:Key="basicStyle" TargetType="{x:Type Control}">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontFamily" Value="/GismeteoWeather;component/content/#Segoe WP Light"/>
+            <Setter Property="Padding" Value="5,0"/>
+            <Setter Property="Margin" Value="0,0,0,5"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True"/>
+            <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling"/>
+        </Style>
+        <Style TargetType="{x:Type ComboBox}" BasedOn="{StaticResource basicStyle}"/>
+        <Style TargetType="{x:Type Label}" BasedOn="{StaticResource basicStyle}">
+            <Setter Property="Margin" Value="0"/>
+        </Style>
+        <Style TargetType="{x:Type Button}" BasedOn="{StaticResource basicStyle}">
+            <Setter Property="Margin" Value="0,5,5,0"/>
+        </Style>
+        <Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource basicStyle}"/>
+        <Style TargetType="{x:Type GroupBox}">
+            <Setter Property="FontFamily" Value="/GismeteoWeather;component/content/#Segoe WP Light"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Margin" Value="0,0,0,5"/>
+        </Style>
+        <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource basicStyle}">
+            <Setter Property="Margin" Value="0,0,0,2"/>
+        </Style>
+
+        <Style TargetType="{x:Type PasswordBox}" BasedOn="{StaticResource basicStyle}"/>
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="10"/>
+            <ColumnDefinition Width="1.2*"/>
+            <ColumnDefinition Width="10"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="10"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="10"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="1" Grid.Column="1">
+            <Label Content="Название города:"/>
+            <ComboBox x:Name="CityName" IsEditable="True" ToolTip="Начните вводить название города или выберите из списка" StaysOpenOnEdit="True" MaxDropDownHeight="144"/>
+            <DockPanel LastChildFill="True">
+                <Label Content="Частота обновления:" DockPanel.Dock="Left"/>
+                <ComboBox x:Name="RefreshPeriod" SelectedIndex="0" SelectedItem="" SelectedValue="halfHour">
+                    <ComboBoxItem Content="30 мин."/>
+                    <ComboBoxItem Content="1 час"/>
+                    <ComboBoxItem Content="2 часа"/>
+                    <ComboBoxItem Content="4 часа"/>
+                </ComboBox>
+            </DockPanel>
+            <CheckBox x:Name="isMinimazeToTray" Content="Сворачивать в трей" IsChecked="True"/>
+            <Separator/>
+            <Button x:Name="ShowLog" Content="Просмотреть логи"/>
+        </StackPanel>
+        <DockPanel Grid.Row="1" Grid.Column="3">
+            <GroupBox x:Name="MysqlGroup" Header="MySQL-сервер" DockPanel.Dock="Top">
+                <StackPanel>
+                    <Label Content="Логин"/>
+                    <TextBox x:Name="Login"/>
+                    <Label Content="Пароль"/>
+                    <PasswordBox x:Name="Password"/>
+                    <Label Content="Сервер"/>
+                    <TextBox x:Name="Server"/>
+                    <Label Content="Порт"/>
+                    <TextBox x:Name="Port"/>
+                </StackPanel>
+            </GroupBox>
+            <DockPanel DockPanel.Dock="Bottom">
+                <Button x:Name="Cancel" Content="Отмена" IsCancel="True" DockPanel.Dock="Right" Click="Cancel_Click"/>
+                <Button x:Name="Ok" Content="Ок" IsDefault="True" DockPanel.Dock="Right" Click="Ok_Click"/>
+            </DockPanel>
+        </DockPanel>
+    </Grid>
+</Window>

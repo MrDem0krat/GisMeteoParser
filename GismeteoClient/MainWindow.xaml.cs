@@ -14,7 +14,6 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using NLog;
 
-
 namespace GismeteoClient
 {
     /// <summary>
@@ -26,7 +25,11 @@ namespace GismeteoClient
         public static System.Windows.Forms.NotifyIcon TrayIcon = new System.Windows.Forms.NotifyIcon();
         public static ContextMenu TrayMenu = new ContextMenu();
         public static SplashScreen _splashScreen = new SplashScreen("Resources/graphics/SplashScreen.png");
+        private SettingsWnd settingsWnd;
         private static WindowState CurrentWindowState { get; set; }
+        public static WeatherService.WServiceClient client = new WeatherService.WServiceClient("NetTcpBinding_IWService");
+
+
         public MainWindow()
         {
             Application.Current.MainWindow.Hide();
@@ -66,7 +69,7 @@ namespace GismeteoClient
         /// <param name="e"></param>
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
-            if (!Properties.Settings.Default.CanClose)
+            if (!Properties.Settings.Default.USCanClose)
             {
                 CurrentWindowState = WindowState;
                 (TrayMenu.Items[0] as MenuItem).Header = "Показать";
@@ -75,7 +78,7 @@ namespace GismeteoClient
             else
             {
                 base.OnClosing(e);
-                //Weather.SaveAuthData();
+                client.Close();
                 Properties.Settings.Default.Save();
                 TrayIcon.Visible = false;
                 TrayIcon.Dispose();
@@ -103,21 +106,38 @@ namespace GismeteoClient
         /// <param name="e"></param>
         private void button_settings_Click(object sender, RoutedEventArgs e)
         {
-            //settingsWnd = new SettingsWindow();
-            //if (settingsWnd.ShowDialog() == true) // При нажатии ОК сохранаяем все настройки
-            //{
-            //    Weather.CityName = settingsWnd.CityName.SelectedItem.ToString();
-            //    Weather.CityID = settingsWnd.CityName.SelectedValue.ToString();
-            //    Weather.CityNameEng = Weather.ReadCityNameEng();
-            //    Properties.Settings.Default.RefreshPeriod = Settings.RefreshPeriod.FindName(settingsWnd.RefreshPeriod.SelectedIndex);
-            //    Properties.Settings.Default.CanClose = !settingsWnd.isMinimazeToTray.IsChecked.Value;
-            //    WeatherDatabase.User = settingsWnd.Login.Text;
-            //    WeatherDatabase.Server = settingsWnd.Server.Text;
-            //    WeatherDatabase.Port = uint.Parse(settingsWnd.Port.Text);
-            //    if (settingsWnd.Password.Password != "    ")
-            //        WeatherDatabase.Password = settingsWnd.Password.Password;
-            //    Properties.Settings.Default.Save();
-            //}
+            settingsWnd = new SettingsWnd();
+            if (settingsWnd.ShowDialog() == true)
+            {
+                if(!Properties.Settings.Default.isDbDataSaved)
+                {
+                    if (settingsWnd.Password.Password != "    ")
+                    {
+                        Properties.Settings.Default.USdbLogin = settingsWnd.Login.Text;
+                        Properties.Settings.Default.USdbServer = settingsWnd.Server.Text;
+                        Properties.Settings.Default.USdbPort = uint.Parse(settingsWnd.Port.Text);
+                        client.SetAuthData(
+                            Properties.Settings.Default.USdbServer,
+                            Properties.Settings.Default.USdbPort,
+                            Properties.Settings.Default.USdbLogin,
+                            settingsWnd.Password.Password);
+                        client.SaveSettings();
+                        Properties.Settings.Default.isDbDataSaved = true;
+                    }
+                    Properties.Settings.Default.USCityName = settingsWnd.CityName.SelectedItem != null ? settingsWnd.CityName.SelectedItem.ToString() : string.Empty;
+                    Properties.Settings.Default.USCityID = 0;
+                    Properties.Settings.Default.USRefreshPeriod = settingsWnd.RefreshPeriod.SelectedIndex;
+                    Properties.Settings.Default.USCanClose = !settingsWnd.isMinimazeToTray.IsChecked.Value;
+                }
+                else
+                {
+                    Properties.Settings.Default.USCityName = settingsWnd.CityName.SelectedItem != null ? settingsWnd.CityName.SelectedItem.ToString() : string.Empty;
+                    Properties.Settings.Default.USCityID = client.GetCityId(settingsWnd.CityName.SelectedItem != null ? settingsWnd.CityName.SelectedItem.ToString() : string.Empty);
+                    Properties.Settings.Default.USRefreshPeriod = settingsWnd.RefreshPeriod.SelectedIndex;
+                    Properties.Settings.Default.USCanClose = !settingsWnd.isMinimazeToTray.IsChecked.Value;
+                }
+                Properties.Settings.Default.Save();
+            }
         }
 
         private void button_forecast_type_Click(object sender, RoutedEventArgs e)//убрать
@@ -180,7 +200,7 @@ namespace GismeteoClient
         /// <param name="e"></param>
         private void MenuExitTray_Click(object sender, RoutedEventArgs e)
         {
-            Properties.Settings.Default.CanClose = true;
+            Properties.Settings.Default.USCanClose = true;
             Close();
         }
         #endregion

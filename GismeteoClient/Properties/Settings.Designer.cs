@@ -25,18 +25,6 @@ namespace GismeteoClient.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool CanClose {
-            get {
-                return ((bool)(this["CanClose"]));
-            }
-            set {
-                this["CanClose"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("Resources/graphics/weather_icons/")]
         public string ImagesPath {
             get {
@@ -49,13 +37,97 @@ namespace GismeteoClient.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("FourHour")]
-        public string RefreshPeriod {
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string USdbLogin {
             get {
-                return ((string)(this["RefreshPeriod"]));
+                return ((string)(this["USdbLogin"]));
             }
             set {
-                this["RefreshPeriod"] = value;
+                this["USdbLogin"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string USdbServer {
+            get {
+                return ((string)(this["USdbServer"]));
+            }
+            set {
+                this["USdbServer"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public uint USdbPort {
+            get {
+                return ((uint)(this["USdbPort"]));
+            }
+            set {
+                this["USdbPort"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool isDbDataSaved {
+            get {
+                return ((bool)(this["isDbDataSaved"]));
+            }
+            set {
+                this["isDbDataSaved"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("4258")]
+        public int USCityID {
+            get {
+                return ((int)(this["USCityID"]));
+            }
+            set {
+                this["USCityID"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string USCityName {
+            get {
+                return ((string)(this["USCityName"]));
+            }
+            set {
+                this["USCityName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int USRefreshPeriod {
+            get {
+                return ((int)(this["USRefreshPeriod"]));
+            }
+            set {
+                this["USRefreshPeriod"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool USCanClose {
+            get {
+                return ((bool)(this["USCanClose"]));
+            }
+            set {
+                this["USCanClose"] = value;
             }
         }
     }

@@ -41,6 +41,8 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -51,6 +53,7 @@
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
+    <Reference Include="Weather, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL" />
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -60,8 +63,16 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Service References\WeatherService\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </Compile>
     <Compile Include="Settings.cs" />
     <Compile Include="Interface.cs" />
+    <Compile Include="SettingsWnd.xaml.cs">
+      <DependentUpon>SettingsWnd.xaml</DependentUpon>
+    </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -74,6 +85,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="SettingsWnd.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -99,6 +114,16 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <AppDesigner Include="Properties\" />
+    <None Include="Service References\WeatherService\item.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\WeatherService\item1.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\WeatherService\item2.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\WeatherService\WService.wsdl" />
     <Resource Include="Resources\fonts\SegoeWP-Black.ttf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
@@ -126,12 +151,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Weather\WeatherLib.csproj">
-      <Project>{bb380125-9dc7-4fb4-8a47-e084d699d285}</Project>
-      <Name>WeatherLib</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Resources\graphics\Checked.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
@@ -151,7 +170,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <Resource Include="Resources\graphics\weather_icons\skc_n.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -281,6 +299,33 @@
     <Resource Include="Resources\graphics\weather_icons\skc_d.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Weather\WeatherLib.csproj">
+      <Project>{bb380125-9dc7-4fb4-8a47-e084d699d285}</Project>
+      <Name>WeatherLib</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadataStorage Include="Service References\WeatherService\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Service References\WeatherService\item.disco" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Service References\WeatherService\configuration91.svcinfo" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Service References\WeatherService\configuration.svcinfo" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Service References\WeatherService\Reference.svcmap">
+      <Generator>WCF Proxy Generator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

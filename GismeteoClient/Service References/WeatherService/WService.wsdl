@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:wsap="http://schemas.xmlsoap.org/ws/2004/08/addressing/policy" xmlns:wsa10="http://www.w3.org/2005/08/addressing" xmlns:tns="http://tempuri.org/" xmlns:msc="http://schemas.microsoft.com/ws/2005/12/wsdl/contract" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata" xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" name="WService" targetNamespace="http://tempuri.org/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsp:Policy wsu:Id="NetTcpBinding_IWService_policy">
+    <wsp:ExactlyOne>
+      <wsp:All>
+        <msb:BinaryEncoding xmlns:msb="http://schemas.microsoft.com/ws/06/2004/mspolicy/netbinary1" />
+        <sp:TransportBinding xmlns:sp="http://schemas.xmlsoap.org/ws/2005/07/securitypolicy">
+          <wsp:Policy>
+            <sp:TransportToken>
+              <wsp:Policy>
+                <msf:WindowsTransportSecurity xmlns:msf="http://schemas.microsoft.com/ws/2006/05/framing/policy">
+                  <msf:ProtectionLevel>EncryptAndSign</msf:ProtectionLevel>
+                </msf:WindowsTransportSecurity>
+              </wsp:Policy>
+            </sp:TransportToken>
+            <sp:AlgorithmSuite>
+              <wsp:Policy>
+                <sp:Basic256 />
+              </wsp:Policy>
+            </sp:AlgorithmSuite>
+            <sp:Layout>
+              <wsp:Policy>
+                <sp:Strict />
+              </wsp:Policy>
+            </sp:Layout>
+          </wsp:Policy>
+        </sp:TransportBinding>
+        <wsaw:UsingAddressing />
+      </wsp:All>
+    </wsp:ExactlyOne>
+  </wsp:Policy>
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://tempuri.org/Imports">
+      <xsd:import schemaLocation="http://localhost:8080/?xsd=xsd0" namespace="http://tempuri.org/" />
+      <xsd:import schemaLocation="http://localhost:8080/?xsd=xsd1" namespace="http://schemas.microsoft.com/2003/10/Serialization/" />
+      <xsd:import schemaLocation="http://localhost:8080/?xsd=xsd2" namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" />
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="IWService_SetAuthData_InputMessage">
+    <wsdl:part name="parameters" element="tns:SetAuthData" />
+  </wsdl:message>
+  <wsdl:message name="IWService_SetAuthData_OutputMessage">
+    <wsdl:part name="parameters" element="tns:SetAuthDataResponse" />
+  </wsdl:message>
+  <wsdl:message name="IWService_GetCityName_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetCityName" />
+  </wsdl:message>
+  <wsdl:message name="IWService_GetCityName_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetCityNameResponse" />
+  </wsdl:message>
+  <wsdl:message name="IWService_GetCityId_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetCityId" />
+  </wsdl:message>
+  <wsdl:message name="IWService_GetCityId_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetCityIdResponse" />
+  </wsdl:message>
+  <wsdl:message name="IWService_GetCitiesList_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetCitiesList" />
+  </wsdl:message>
+  <wsdl:message name="IWService_GetCitiesList_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetCitiesListResponse" />
+  </wsdl:message>
+  <wsdl:message name="IWService_SaveSettings_InputMessage">
+    <wsdl:part name="parameters" element="tns:SaveSettings" />
+  </wsdl:message>
+  <wsdl:message name="IWService_SaveSettings_OutputMessage">
+    <wsdl:part name="parameters" element="tns:SaveSettingsResponse" />
+  </wsdl:message>
+  <wsdl:portType name="IWService">
+    <wsdl:operation name="SetAuthData">
+      <wsdl:input wsaw:Action="http://tempuri.org/IWService/SetAuthData" message="tns:IWService_SetAuthData_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IWService/SetAuthDataResponse" message="tns:IWService_SetAuthData_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetCityName">
+      <wsdl:input wsaw:Action="http://tempuri.org/IWService/GetCityName" message="tns:IWService_GetCityName_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IWService/GetCityNameResponse" message="tns:IWService_GetCityName_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetCityId">
+      <wsdl:input wsaw:Action="http://tempuri.org/IWService/GetCityId" message="tns:IWService_GetCityId_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IWService/GetCityIdResponse" message="tns:IWService_GetCityId_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetCitiesList">
+      <wsdl:input wsaw:Action="http://tempuri.org/IWService/GetCitiesList" message="tns:IWService_GetCitiesList_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IWService/GetCitiesListResponse" message="tns:IWService_GetCitiesList_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="SaveSettings">
+      <wsdl:input wsaw:Action="http://tempuri.org/IWService/SaveSettings" message="tns:IWService_SaveSettings_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IWService/SaveSettingsResponse" message="tns:IWService_SaveSettings_OutputMessage" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="BasicHttpBinding_IWService" type="tns:IWService">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="SetAuthData">
+      <soap:operation soapAction="http://tempuri.org/IWService/SetAuthData" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCityName">
+      <soap:operation soapAction="http://tempuri.org/IWService/GetCityName" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCityId">
+      <soap:operation soapAction="http://tempuri.org/IWService/GetCityId" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCitiesList">
+      <soap:operation soapAction="http://tempuri.org/IWService/GetCitiesList" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SaveSettings">
+      <soap:operation soapAction="http://tempuri.org/IWService/SaveSettings" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="NetTcpBinding_IWService" type="tns:IWService">
+    <wsp:PolicyReference URI="#NetTcpBinding_IWService_policy" />
+    <soap12:binding transport="http://schemas.microsoft.com/soap/tcp" />
+    <wsdl:operation name="SetAuthData">
+      <soap12:operation soapAction="http://tempuri.org/IWService/SetAuthData" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCityName">
+      <soap12:operation soapAction="http://tempuri.org/IWService/GetCityName" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCityId">
+      <soap12:operation soapAction="http://tempuri.org/IWService/GetCityId" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCitiesList">
+      <soap12:operation soapAction="http://tempuri.org/IWService/GetCitiesList" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SaveSettings">
+      <soap12:operation soapAction="http://tempuri.org/IWService/SaveSettings" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="WService">
+    <wsdl:port name="BasicHttpBinding_IWService" binding="tns:BasicHttpBinding_IWService">
+      <soap:address location="http://localhost:8080/WService" />
+    </wsdl:port>
+    <wsdl:port name="NetTcpBinding_IWService" binding="tns:NetTcpBinding_IWService">
+      <soap12:address location="net.tcp://localhost:43396/WService" />
+      <wsa10:EndpointReference>
+        <wsa10:Address>net.tcp://localhost:43396/WService</wsa10:Address>
+        <Identity xmlns="http://schemas.xmlsoap.org/ws/2006/02/addressingidentity">
+          <Upn>ZEROCOOL\Алексей</Upn>
+        </Identity>
+      </wsa10:EndpointReference>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
