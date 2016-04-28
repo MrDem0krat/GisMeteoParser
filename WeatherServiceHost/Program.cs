@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.ServiceModel;
 
 namespace WeatherServiceHost
@@ -11,11 +7,10 @@ namespace WeatherServiceHost
     {
         static void Main(string[] args)
         {
-            using (var host = new ServiceHost(typeof(WeatherService.WeatherService)))
+            using (var host = new ServiceHost(typeof(WeatherService.WService)))
             {
                 host.Open();
-
-                Console.WriteLine("Host has been started...");
+                Console.WriteLine("Host started...");
                 Console.ReadLine();
             }
         }

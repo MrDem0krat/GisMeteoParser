@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{0F7853F7-0651-4792-8DC2-142242E78A8F}</ProjectGuid>
+    <ProjectGuid>{EA10375A-B8BC-4E09-A1A4-958840E134D7}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>WeatherServiceHost</RootNamespace>
@@ -53,8 +53,11 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\WeatherService\WeatherService.csproj">
-      <Project>{db9dc7be-bd0a-41b8-ae6e-efb866de7bdc}</Project>
+      <Project>{4a766724-036e-4c1a-97f6-9c450ca4fa6b}</Project>
       <Name>WeatherService</Name>
     </ProjectReference>
   </ItemGroup>
