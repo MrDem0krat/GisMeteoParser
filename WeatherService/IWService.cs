@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.Text;
+using Weather;
 
 namespace WeatherService
 {
@@ -22,6 +23,9 @@ namespace WeatherService
 
         [OperationContract]
         Dictionary<int, string> GetCitiesList();
+
+        [OperationContract]
+        WeatherItem GetWeather(int id, DateTime date, DayPart part);
 
         [OperationContract]
         void SaveSettings();

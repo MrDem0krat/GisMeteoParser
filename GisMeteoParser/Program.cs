@@ -17,14 +17,11 @@ namespace GisMeteoWeather
             NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
             isRun = true;
             string answer = string.Empty;
-            
 
             Worker.Setup();
 
             Console.WriteLine(">>>\tGismeteo weather parser\t<<<\n\nWrite 'help' to view available commands list...");
 
-            Console.WriteLine("4258 city is {0}", DataBaseWeather.DataBase.GetCityNameByID(4258));
-            Console.WriteLine("4368 city is {0}", DataBaseWeather.DataBase.GetCityNameByID(4368));
             while (isRun)
             {
                 answer = Console.ReadLine().ToLower();

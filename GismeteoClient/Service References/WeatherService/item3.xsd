@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:tns="http://schemas.datacontract.org/2004/07/Weather" elementFormDefault="qualified" targetNamespace="http://schemas.datacontract.org/2004/07/Weather" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="DayPart">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Night" />
+      <xs:enumeration value="Morning" />
+      <xs:enumeration value="Day" />
+      <xs:enumeration value="Evening" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="DayPart" nillable="true" type="tns:DayPart" />
+  <xs:complexType name="WeatherItem">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="CityID" type="xs:int" />
+      <xs:element minOccurs="0" name="Condition" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="Date" type="xs:dateTime" />
+      <xs:element minOccurs="0" name="Humidity" type="xs:int" />
+      <xs:element minOccurs="0" name="PartOfDay" type="tns:DayPart" />
+      <xs:element minOccurs="0" name="Pressure" type="xs:int" />
+      <xs:element minOccurs="0" name="RefreshTime" type="xs:dateTime" />
+      <xs:element minOccurs="0" name="Temperature" type="xs:int" />
+      <xs:element minOccurs="0" name="TemperatureFeel" type="xs:int" />
+      <xs:element minOccurs="0" name="TypeImage" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="WindDirection" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="WindSpeed" type="xs:float" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="WeatherItem" nillable="true" type="tns:WeatherItem" />
+</xs:schema>

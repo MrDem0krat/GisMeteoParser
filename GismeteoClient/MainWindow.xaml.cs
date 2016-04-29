@@ -104,7 +104,7 @@ namespace GismeteoClient
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void button_settings_Click(object sender, RoutedEventArgs e)
+        private void button_settings_Click(object sender, RoutedEventArgs e)//как-то слишком замудрёно
         {
             settingsWnd = new SettingsWnd();
             if (settingsWnd.ShowDialog() == true)
@@ -180,6 +180,7 @@ namespace GismeteoClient
         private void test_button_Click(object sender, RoutedEventArgs e)
         {
             _logger.Debug("Нажата тестовая кнопка настроек");
+            MainWndInterface.RefreshMainWndData();
         }
 
         // Обработчики нажатий пунков контекстного меню иконки в трее

@@ -48,7 +48,6 @@ namespace GismeteoClient
                 Dictionary<int, string> _source = MainWindow.client.GetCitiesList();
                 CityName.ItemsSource = _source.Values;
                 CityName.Text = MainWindow.client.GetCityName(Properties.Settings.Default.USCityID);
-                //MainWindow.client.Close();
             }
             else
             {

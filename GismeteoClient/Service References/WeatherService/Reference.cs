@@ -39,6 +39,12 @@ namespace GismeteoClient.WeatherService {
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/GetCitiesList", ReplyAction="http://tempuri.org/IWService/GetCitiesListResponse")]
         System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int, string>> GetCitiesListAsync();
         
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/GetWeather", ReplyAction="http://tempuri.org/IWService/GetWeatherResponse")]
+        Weather.WeatherItem GetWeather(int id, System.DateTime date, Weather.DayPart part);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/GetWeather", ReplyAction="http://tempuri.org/IWService/GetWeatherResponse")]
+        System.Threading.Tasks.Task<Weather.WeatherItem> GetWeatherAsync(int id, System.DateTime date, Weather.DayPart part);
+        
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/SaveSettings", ReplyAction="http://tempuri.org/IWService/SaveSettingsResponse")]
         void SaveSettings();
         
@@ -103,6 +109,14 @@ namespace GismeteoClient.WeatherService {
         
         public System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int, string>> GetCitiesListAsync() {
             return base.Channel.GetCitiesListAsync();
+        }
+        
+        public Weather.WeatherItem GetWeather(int id, System.DateTime date, Weather.DayPart part) {
+            return base.Channel.GetWeather(id, date, part);
+        }
+        
+        public System.Threading.Tasks.Task<Weather.WeatherItem> GetWeatherAsync(int id, System.DateTime date, Weather.DayPart part) {
+            return base.Channel.GetWeatherAsync(id, date, part);
         }
         
         public void SaveSettings() {

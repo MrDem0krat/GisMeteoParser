@@ -109,6 +109,7 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <None Include="packages.config" />
+    <None Include="Properties\DataSources\Weather.WeatherItem.datasource" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -121,6 +122,9 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="Service References\WeatherService\item2.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\WeatherService\item3.xsd">
       <SubType>Designer</SubType>
     </None>
     <None Include="Service References\WeatherService\WService.wsdl" />
@@ -146,9 +150,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\graphics\SplashScreen.png">
+    <SplashScreen Include="Resources\graphics\SplashScreen.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
+    </SplashScreen>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\graphics\Checked.png">

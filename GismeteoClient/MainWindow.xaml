@@ -162,59 +162,59 @@
                     <Image x:Name="imgWeatherNow"/>
                 </DockPanel>
             </DockPanel>
-            <!--Morning-->
+            <!--Night-->
             <Border Grid.Row="3" Grid.Column="1">
                 <DockPanel LastChildFill="True">
-                    <Label x:Name="lblDaypartToday_0" HorizontalContentAlignment="Center" DockPanel.Dock="Top"/>
-                    <Label x:Name="lblWeatherTypeToday_0" DockPanel.Dock="Bottom"/>
-                    <Label x:Name="lblHumidityToday_0" DockPanel.Dock="Bottom"/>
-                    <Label x:Name="lblPressureToday_0" DockPanel.Dock="Bottom"/>
-                    <Label x:Name="lblWindToday_0" DockPanel.Dock="Bottom"/>
+                    <Label x:Name="lblDate_0" HorizontalContentAlignment="Center" DockPanel.Dock="Top"/>
+                    <Label x:Name="lblCondition_0" DockPanel.Dock="Bottom"/>
+                    <Label x:Name="lblHumidity_0" DockPanel.Dock="Bottom"/>
+                    <Label x:Name="lblPressure_0" DockPanel.Dock="Bottom"/>
+                    <Label x:Name="lblWind_0" DockPanel.Dock="Bottom"/>
                     <DockPanel LastChildFill="True">
-                        <Label x:Name="lblTemperatureToday_0" Style="{StaticResource TemperatureStyle}" DockPanel.Dock="Right"/>
-                        <Image x:Name="imgWeatherToday_0"/>
+                        <Label x:Name="lblTemperature_0" Style="{StaticResource TemperatureStyle}" DockPanel.Dock="Right"/>
+                        <Image x:Name="imgWeather_0"/>
+                    </DockPanel>
+                </DockPanel>
+            </Border>
+            <!--Morning-->
+            <Border Grid.Row="3" Grid.Column="3">
+                <DockPanel LastChildFill="True">
+                    <Label x:Name="lblDate_1" HorizontalContentAlignment="Center" DockPanel.Dock="Top"/>
+                    <Label x:Name="lblCondition_1" DockPanel.Dock="Bottom"/>
+                    <Label x:Name="lblHumidity_1" DockPanel.Dock="Bottom"/>
+                    <Label x:Name="lblPressure_1" DockPanel.Dock="Bottom"/>
+                    <Label x:Name="lblWind_1" DockPanel.Dock="Bottom"/>
+                    <DockPanel LastChildFill="True">
+                        <Label x:Name="lblTemperature_1" Style="{StaticResource TemperatureStyle}" DockPanel.Dock="Right"/>
+                        <Image x:Name="imgWeather_1"/>
                     </DockPanel>
                 </DockPanel>
             </Border>
             <!--Day-->
-            <Border Grid.Row="3" Grid.Column="3">
+            <Border Grid.Row="3" Grid.Column="5">
                 <DockPanel LastChildFill="True">
-                    <Label x:Name="lblDaypartToday_1" HorizontalContentAlignment="Center" DockPanel.Dock="Top"/>
-                    <Label x:Name="lblWeatherTypeToday_1" DockPanel.Dock="Bottom"/>
-                    <Label x:Name="lblHumidityToday_1" DockPanel.Dock="Bottom"/>
-                    <Label x:Name="lblPressureToday_1" DockPanel.Dock="Bottom"/>
-                    <Label x:Name="lblWindToday_1" DockPanel.Dock="Bottom"/>
+                    <Label x:Name="lblDate_2" HorizontalContentAlignment="Center" DockPanel.Dock="Top"/>
+                    <Label x:Name="lblCondition_2" DockPanel.Dock="Bottom"/>
+                    <Label x:Name="lblHumidity_2" DockPanel.Dock="Bottom"/>
+                    <Label x:Name="lblPressure_2" DockPanel.Dock="Bottom"/>
+                    <Label x:Name="lblWind_2" DockPanel.Dock="Bottom"/>
                     <DockPanel LastChildFill="True">
-                        <Label x:Name="lblTemperatureToday_1" Style="{StaticResource TemperatureStyle}" DockPanel.Dock="Right"/>
-                        <Image x:Name="imgWeatherToday_1"/>
+                        <Label x:Name="lblTemperature_2" Style="{StaticResource TemperatureStyle}" DockPanel.Dock="Right"/>
+                        <Image x:Name="imgWeather_2"/>
                     </DockPanel>
                 </DockPanel>
             </Border>
             <!--Evening-->
-            <Border Grid.Row="3" Grid.Column="5">
-                <DockPanel LastChildFill="True">
-                    <Label x:Name="lblDaypartToday_2" HorizontalContentAlignment="Center" DockPanel.Dock="Top"/>
-                    <Label x:Name="lblWeatherTypeToday_2" DockPanel.Dock="Bottom"/>
-                    <Label x:Name="lblHumidityToday_2" DockPanel.Dock="Bottom"/>
-                    <Label x:Name="lblPressureToday_2" DockPanel.Dock="Bottom"/>
-                    <Label x:Name="lblWindToday_2" DockPanel.Dock="Bottom"/>
-                    <DockPanel LastChildFill="True">
-                        <Label x:Name="lblTemperatureToday_2" Style="{StaticResource TemperatureStyle}" DockPanel.Dock="Right"/>
-                        <Image x:Name="imgWeatherToday_2"/>
-                    </DockPanel>
-                </DockPanel>
-            </Border>
-            <!--Nigth-->
             <Border Grid.Row="3" Grid.Column="7">
                 <DockPanel LastChildFill="True">
-                    <Label x:Name="lblDaypartToday_3" HorizontalContentAlignment="Center" DockPanel.Dock="Top"/>
-                    <Label x:Name="lblWeatherTypeToday_3" DockPanel.Dock="Bottom"/>
-                    <Label x:Name="lblHumidityToday_3" DockPanel.Dock="Bottom"/>
-                    <Label x:Name="lblPressureToday_3" DockPanel.Dock="Bottom"/>
-                    <Label x:Name="lblWindToday_3" DockPanel.Dock="Bottom"/>
+                    <Label x:Name="lblDate_3" HorizontalContentAlignment="Center" DockPanel.Dock="Top"/>
+                    <Label x:Name="lblCondition_3" DockPanel.Dock="Bottom"/>
+                    <Label x:Name="lblHumidity_3" DockPanel.Dock="Bottom"/>
+                    <Label x:Name="lblPressure_3" DockPanel.Dock="Bottom"/>
+                    <Label x:Name="lblWind_3" DockPanel.Dock="Bottom"/>
                     <DockPanel LastChildFill="True">
-                        <Label x:Name="lblTemperatureToday_3" Style="{StaticResource TemperatureStyle}" DockPanel.Dock="Right"/>
-                        <Image x:Name="imgWeatherToday_3"/>
+                        <Label x:Name="lblTemperature_3" Style="{StaticResource TemperatureStyle}" DockPanel.Dock="Right"/>
+                        <Image x:Name="imgWeather_3"/>
                     </DockPanel>
                 </DockPanel>
             </Border>

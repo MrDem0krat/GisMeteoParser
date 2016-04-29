@@ -106,8 +106,6 @@ namespace GisMeteoWeather
                                 _weather.Pressure = _pressure;
                             else
                                 throw new Exception("Error while parsing Pressure");
-
-                        HasError = true;
                     }
 
                     //Wind
@@ -163,7 +161,7 @@ namespace GisMeteoWeather
         /// Функция возвращает список вида НазваниеГорода:ID
         /// </summary>
         /// <returns></returns>
-        public static Dictionary<int, string> GetCityList()
+        public static Dictionary<int, string> GetCityList() //тест
         {
             HtmlWeb _web = new HtmlWeb();
             Dictionary<int, string> _cityDictionary = new Dictionary<int, string>();
@@ -239,6 +237,7 @@ namespace GisMeteoWeather
             parser.TargetUrl = Properties.Resources.TargetSiteUrl;
             parser.RefreshPeriod = new TimeSpan(0, 2, 0);
             parser.ParserHandler = new Parser.ParserGetDataHandler(ParseWeatherData);
+            WeatherInfoList = new List<WeatherItem>();
 
             parser.WeatherParsed += parser_WeatherParsed;
             parser.ParserStarted += parser_Started;
@@ -257,6 +256,12 @@ namespace GisMeteoWeather
                 Console.WriteLine("ID: " + item.Key + "\tName: " + item.Value);
         } //test; later remove
 
+        public static void PrintWeather() //тест
+        {
+            WeatherItem weather = (WeatherItem)DataBase.GetWeatherItem(4258, new DateTime(2016,04,23,0,0,0), DayPart.Day);
+            Console.WriteLine(weather.ToString());
+        }
+
         /// <summary>
         /// Обработчик пользовательского ввода
         /// </summary>
@@ -273,9 +278,10 @@ namespace GisMeteoWeather
                         "{3,-20}Загрузить список городов с главной страницы\n"+
                         "{4,-20}Подготовить базу данных для работы\n"+
                         "{5,-20}Записать список городов в базу данных\n"+
+                        "{6,-20}Получить название города по ИД\n"+
                         "{7,-20}Ввести пароль к БД (root)\n" +
                         "{8,-20}Остановить парсер и закрыть приложение\n",
-                                        "start", "stop", "status", "load cl", "prepare", "write cl", "password", "exit");
+                                        "start", "stop", "status", "load cl", "prepare", "write cl","getl", "password", "exit");
                     break;
 
                 case "exit":
@@ -346,9 +352,17 @@ namespace GisMeteoWeather
                     break;
 
                 case "print cl":
-                    Worker.PrintCityList(cities);
+                    PrintCityList(cities);
                     break;
-
+                case "print w":
+                    PrintWeather();
+                    break;
+                case "getl":
+                    Console.Write("Enter ID:\t");
+                    var testtt = Console.ReadLine();
+                    Console.WriteLine("Result:\n\n");
+                    Console.WriteLine(DataBase.GetCityNameByID(int.Parse(testtt)));
+                    break;
                 case "":
                     break;
 
@@ -441,10 +455,7 @@ namespace GisMeteoWeather
             WeatherInfoList.Clear();
             _logger.Debug("Parser goes to sleep");
             Console.WriteLine("Parser goes to sleep");
-
         }
         #endregion
-   
-        
     }
 }
