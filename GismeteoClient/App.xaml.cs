@@ -17,7 +17,6 @@ namespace GismeteoClient
         {
             GismeteoClient.MainWindow._splashScreen.Show(false, true);
             Settings.LoggerConfig();
-            GismeteoClient.MainWindow._logger.Info("Приложение запущено");
         }
     }
 }

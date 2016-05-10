@@ -130,5 +130,60 @@ namespace GismeteoClient.Properties {
                 this["USCanClose"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::Weather.WeatherItem LastForecastNight {
+            get {
+                return ((global::Weather.WeatherItem)(this["LastForecastNight"]));
+            }
+            set {
+                this["LastForecastNight"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::Weather.WeatherItem LastForecastMorning {
+            get {
+                return ((global::Weather.WeatherItem)(this["LastForecastMorning"]));
+            }
+            set {
+                this["LastForecastMorning"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::Weather.WeatherItem LastForecastDay {
+            get {
+                return ((global::Weather.WeatherItem)(this["LastForecastDay"]));
+            }
+            set {
+                this["LastForecastDay"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::Weather.WeatherItem LastForecastEvening {
+            get {
+                return ((global::Weather.WeatherItem)(this["LastForecastEvening"]));
+            }
+            set {
+                this["LastForecastEvening"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::Weather.WeatherItem LastForecastNow {
+            get {
+                return ((global::Weather.WeatherItem)(this["LastForecastNow"]));
+            }
+            set {
+                this["LastForecastNow"] = value;
+            }
+        }
     }
 }

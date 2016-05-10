@@ -15,29 +15,23 @@ namespace GismeteoClient.WeatherService {
     [System.ServiceModel.ServiceContractAttribute(ConfigurationName="WeatherService.IWService")]
     public interface IWService {
         
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/SetAuthData", ReplyAction="http://tempuri.org/IWService/SetAuthDataResponse")]
-        void SetAuthData(string server, uint port, string username, string password);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/SetAuthData", ReplyAction="http://tempuri.org/IWService/SetAuthDataResponse")]
-        System.Threading.Tasks.Task SetAuthDataAsync(string server, uint port, string username, string password);
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/GetCityName", ReplyAction="http://tempuri.org/IWService/GetCityNameResponse")]
+        string GetCityName(int cityID);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/GetCityName", ReplyAction="http://tempuri.org/IWService/GetCityNameResponse")]
-        string GetCityName(int id);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/GetCityName", ReplyAction="http://tempuri.org/IWService/GetCityNameResponse")]
-        System.Threading.Tasks.Task<string> GetCityNameAsync(int id);
+        System.Threading.Tasks.Task<string> GetCityNameAsync(int cityID);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/GetCityId", ReplyAction="http://tempuri.org/IWService/GetCityIdResponse")]
-        int GetCityId(string name);
+        int GetCityId(string cityName);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/GetCityId", ReplyAction="http://tempuri.org/IWService/GetCityIdResponse")]
-        System.Threading.Tasks.Task<int> GetCityIdAsync(string name);
+        System.Threading.Tasks.Task<int> GetCityIdAsync(string cityName);
         
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/GetCitiesList", ReplyAction="http://tempuri.org/IWService/GetCitiesListResponse")]
-        System.Collections.Generic.Dictionary<int, string> GetCitiesList();
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/GetAllCities", ReplyAction="http://tempuri.org/IWService/GetAllCitiesResponse")]
+        System.Collections.Generic.Dictionary<int, string> GetAllCities();
         
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/GetCitiesList", ReplyAction="http://tempuri.org/IWService/GetCitiesListResponse")]
-        System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int, string>> GetCitiesListAsync();
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/GetAllCities", ReplyAction="http://tempuri.org/IWService/GetAllCitiesResponse")]
+        System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int, string>> GetAllCitiesAsync();
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/GetWeather", ReplyAction="http://tempuri.org/IWService/GetWeatherResponse")]
         Weather.WeatherItem GetWeather(int id, System.DateTime date, Weather.DayPart part);
@@ -45,11 +39,11 @@ namespace GismeteoClient.WeatherService {
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/GetWeather", ReplyAction="http://tempuri.org/IWService/GetWeatherResponse")]
         System.Threading.Tasks.Task<Weather.WeatherItem> GetWeatherAsync(int id, System.DateTime date, Weather.DayPart part);
         
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/SaveSettings", ReplyAction="http://tempuri.org/IWService/SaveSettingsResponse")]
-        void SaveSettings();
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/CheckConnection", ReplyAction="http://tempuri.org/IWService/CheckConnectionResponse")]
+        bool CheckConnection();
         
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/SaveSettings", ReplyAction="http://tempuri.org/IWService/SaveSettingsResponse")]
-        System.Threading.Tasks.Task SaveSettingsAsync();
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWService/CheckConnection", ReplyAction="http://tempuri.org/IWService/CheckConnectionResponse")]
+        System.Threading.Tasks.Task<bool> CheckConnectionAsync();
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -79,36 +73,28 @@ namespace GismeteoClient.WeatherService {
                 base(binding, remoteAddress) {
         }
         
-        public void SetAuthData(string server, uint port, string username, string password) {
-            base.Channel.SetAuthData(server, port, username, password);
+        public string GetCityName(int cityID) {
+            return base.Channel.GetCityName(cityID);
         }
         
-        public System.Threading.Tasks.Task SetAuthDataAsync(string server, uint port, string username, string password) {
-            return base.Channel.SetAuthDataAsync(server, port, username, password);
+        public System.Threading.Tasks.Task<string> GetCityNameAsync(int cityID) {
+            return base.Channel.GetCityNameAsync(cityID);
         }
         
-        public string GetCityName(int id) {
-            return base.Channel.GetCityName(id);
+        public int GetCityId(string cityName) {
+            return base.Channel.GetCityId(cityName);
         }
         
-        public System.Threading.Tasks.Task<string> GetCityNameAsync(int id) {
-            return base.Channel.GetCityNameAsync(id);
+        public System.Threading.Tasks.Task<int> GetCityIdAsync(string cityName) {
+            return base.Channel.GetCityIdAsync(cityName);
         }
         
-        public int GetCityId(string name) {
-            return base.Channel.GetCityId(name);
+        public System.Collections.Generic.Dictionary<int, string> GetAllCities() {
+            return base.Channel.GetAllCities();
         }
         
-        public System.Threading.Tasks.Task<int> GetCityIdAsync(string name) {
-            return base.Channel.GetCityIdAsync(name);
-        }
-        
-        public System.Collections.Generic.Dictionary<int, string> GetCitiesList() {
-            return base.Channel.GetCitiesList();
-        }
-        
-        public System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int, string>> GetCitiesListAsync() {
-            return base.Channel.GetCitiesListAsync();
+        public System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int, string>> GetAllCitiesAsync() {
+            return base.Channel.GetAllCitiesAsync();
         }
         
         public Weather.WeatherItem GetWeather(int id, System.DateTime date, Weather.DayPart part) {
@@ -119,12 +105,12 @@ namespace GismeteoClient.WeatherService {
             return base.Channel.GetWeatherAsync(id, date, part);
         }
         
-        public void SaveSettings() {
-            base.Channel.SaveSettings();
+        public bool CheckConnection() {
+            return base.Channel.CheckConnection();
         }
         
-        public System.Threading.Tasks.Task SaveSettingsAsync() {
-            return base.Channel.SaveSettingsAsync();
+        public System.Threading.Tasks.Task<bool> CheckConnectionAsync() {
+            return base.Channel.CheckConnectionAsync();
         }
     }
 }

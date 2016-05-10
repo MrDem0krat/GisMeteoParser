@@ -29,5 +29,20 @@
     <Setting Name="USCanClose" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
+    <Setting Name="LastForecastNight" Type="Weather.WeatherItem" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="LastForecastMorning" Type="Weather.WeatherItem" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="LastForecastDay" Type="Weather.WeatherItem" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="LastForecastEvening" Type="Weather.WeatherItem" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="LastForecastNow" Type="Weather.WeatherItem" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>

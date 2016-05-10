@@ -119,9 +119,9 @@
       <Project>{d757ea5b-012e-4e4c-bc0c-0b31573f8452}</Project>
       <Name>ParserLib</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Weather\WeatherLib.csproj">
+    <ProjectReference Include="..\Weather\Weather.csproj">
       <Project>{bb380125-9dc7-4fb4-8a47-e084d699d285}</Project>
-      <Name>WeatherLib</Name>
+      <Name>Weather</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

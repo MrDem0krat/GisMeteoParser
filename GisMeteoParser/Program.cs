@@ -20,7 +20,7 @@ namespace GisMeteoWeather
 
             Worker.Setup();
 
-            Console.WriteLine(">>>\tGismeteo weather parser\t<<<\n\nWrite 'help' to view available commands list...");
+            Console.WriteLine(">>>\tGismeteo weather parser\t<<<\n\nEnter '?' to view available commands list...");
 
             while (isRun)
             {

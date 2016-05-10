@@ -235,7 +235,7 @@ namespace GisMeteoWeather
 
             _logger.Debug("Настройка параметров парсера");
             parser.TargetUrl = Properties.Resources.TargetSiteUrl;
-            parser.RefreshPeriod = new TimeSpan(0, 2, 0);
+            parser.RefreshPeriod = new TimeSpan(0, 30, 0);
             parser.ParserHandler = new Parser.ParserGetDataHandler(ParseWeatherData);
             WeatherInfoList = new List<WeatherItem>();
 
@@ -255,13 +255,7 @@ namespace GisMeteoWeather
             foreach (var item in source)
                 Console.WriteLine("ID: " + item.Key + "\tName: " + item.Value);
         } //test; later remove
-
-        public static void PrintWeather() //тест
-        {
-            WeatherItem weather = (WeatherItem)DataBase.GetWeatherItem(4258, new DateTime(2016,04,23,0,0,0), DayPart.Day);
-            Console.WriteLine(weather.ToString());
-        }
-
+       
         /// <summary>
         /// Обработчик пользовательского ввода
         /// </summary>
@@ -354,14 +348,11 @@ namespace GisMeteoWeather
                 case "print cl":
                     PrintCityList(cities);
                     break;
-                case "print w":
-                    PrintWeather();
-                    break;
                 case "getl":
                     Console.Write("Enter ID:\t");
                     var testtt = Console.ReadLine();
                     Console.WriteLine("Result:\n\n");
-                    Console.WriteLine(DataBase.GetCityNameByID(int.Parse(testtt)));
+                    Console.WriteLine(DataBase.GetCityName(int.Parse(testtt)));
                     break;
                 case "":
                     break;

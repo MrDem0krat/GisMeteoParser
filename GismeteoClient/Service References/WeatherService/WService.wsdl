@@ -37,12 +37,6 @@
       <xsd:import schemaLocation="http://localhost:8080/?xsd=xsd3" namespace="http://schemas.datacontract.org/2004/07/Weather" />
     </xsd:schema>
   </wsdl:types>
-  <wsdl:message name="IWService_SetAuthData_InputMessage">
-    <wsdl:part name="parameters" element="tns:SetAuthData" />
-  </wsdl:message>
-  <wsdl:message name="IWService_SetAuthData_OutputMessage">
-    <wsdl:part name="parameters" element="tns:SetAuthDataResponse" />
-  </wsdl:message>
   <wsdl:message name="IWService_GetCityName_InputMessage">
     <wsdl:part name="parameters" element="tns:GetCityName" />
   </wsdl:message>
@@ -55,11 +49,11 @@
   <wsdl:message name="IWService_GetCityId_OutputMessage">
     <wsdl:part name="parameters" element="tns:GetCityIdResponse" />
   </wsdl:message>
-  <wsdl:message name="IWService_GetCitiesList_InputMessage">
-    <wsdl:part name="parameters" element="tns:GetCitiesList" />
+  <wsdl:message name="IWService_GetAllCities_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetAllCities" />
   </wsdl:message>
-  <wsdl:message name="IWService_GetCitiesList_OutputMessage">
-    <wsdl:part name="parameters" element="tns:GetCitiesListResponse" />
+  <wsdl:message name="IWService_GetAllCities_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetAllCitiesResponse" />
   </wsdl:message>
   <wsdl:message name="IWService_GetWeather_InputMessage">
     <wsdl:part name="parameters" element="tns:GetWeather" />
@@ -67,17 +61,13 @@
   <wsdl:message name="IWService_GetWeather_OutputMessage">
     <wsdl:part name="parameters" element="tns:GetWeatherResponse" />
   </wsdl:message>
-  <wsdl:message name="IWService_SaveSettings_InputMessage">
-    <wsdl:part name="parameters" element="tns:SaveSettings" />
+  <wsdl:message name="IWService_CheckConnection_InputMessage">
+    <wsdl:part name="parameters" element="tns:CheckConnection" />
   </wsdl:message>
-  <wsdl:message name="IWService_SaveSettings_OutputMessage">
-    <wsdl:part name="parameters" element="tns:SaveSettingsResponse" />
+  <wsdl:message name="IWService_CheckConnection_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CheckConnectionResponse" />
   </wsdl:message>
   <wsdl:portType name="IWService">
-    <wsdl:operation name="SetAuthData">
-      <wsdl:input wsaw:Action="http://tempuri.org/IWService/SetAuthData" message="tns:IWService_SetAuthData_InputMessage" />
-      <wsdl:output wsaw:Action="http://tempuri.org/IWService/SetAuthDataResponse" message="tns:IWService_SetAuthData_OutputMessage" />
-    </wsdl:operation>
     <wsdl:operation name="GetCityName">
       <wsdl:input wsaw:Action="http://tempuri.org/IWService/GetCityName" message="tns:IWService_GetCityName_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IWService/GetCityNameResponse" message="tns:IWService_GetCityName_OutputMessage" />
@@ -86,30 +76,21 @@
       <wsdl:input wsaw:Action="http://tempuri.org/IWService/GetCityId" message="tns:IWService_GetCityId_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IWService/GetCityIdResponse" message="tns:IWService_GetCityId_OutputMessage" />
     </wsdl:operation>
-    <wsdl:operation name="GetCitiesList">
-      <wsdl:input wsaw:Action="http://tempuri.org/IWService/GetCitiesList" message="tns:IWService_GetCitiesList_InputMessage" />
-      <wsdl:output wsaw:Action="http://tempuri.org/IWService/GetCitiesListResponse" message="tns:IWService_GetCitiesList_OutputMessage" />
+    <wsdl:operation name="GetAllCities">
+      <wsdl:input wsaw:Action="http://tempuri.org/IWService/GetAllCities" message="tns:IWService_GetAllCities_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IWService/GetAllCitiesResponse" message="tns:IWService_GetAllCities_OutputMessage" />
     </wsdl:operation>
     <wsdl:operation name="GetWeather">
       <wsdl:input wsaw:Action="http://tempuri.org/IWService/GetWeather" message="tns:IWService_GetWeather_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IWService/GetWeatherResponse" message="tns:IWService_GetWeather_OutputMessage" />
     </wsdl:operation>
-    <wsdl:operation name="SaveSettings">
-      <wsdl:input wsaw:Action="http://tempuri.org/IWService/SaveSettings" message="tns:IWService_SaveSettings_InputMessage" />
-      <wsdl:output wsaw:Action="http://tempuri.org/IWService/SaveSettingsResponse" message="tns:IWService_SaveSettings_OutputMessage" />
+    <wsdl:operation name="CheckConnection">
+      <wsdl:input wsaw:Action="http://tempuri.org/IWService/CheckConnection" message="tns:IWService_CheckConnection_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IWService/CheckConnectionResponse" message="tns:IWService_CheckConnection_OutputMessage" />
     </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="BasicHttpBinding_IWService" type="tns:IWService">
     <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
-    <wsdl:operation name="SetAuthData">
-      <soap:operation soapAction="http://tempuri.org/IWService/SetAuthData" style="document" />
-      <wsdl:input>
-        <soap:body use="literal" />
-      </wsdl:input>
-      <wsdl:output>
-        <soap:body use="literal" />
-      </wsdl:output>
-    </wsdl:operation>
     <wsdl:operation name="GetCityName">
       <soap:operation soapAction="http://tempuri.org/IWService/GetCityName" style="document" />
       <wsdl:input>
@@ -128,8 +109,8 @@
         <soap:body use="literal" />
       </wsdl:output>
     </wsdl:operation>
-    <wsdl:operation name="GetCitiesList">
-      <soap:operation soapAction="http://tempuri.org/IWService/GetCitiesList" style="document" />
+    <wsdl:operation name="GetAllCities">
+      <soap:operation soapAction="http://tempuri.org/IWService/GetAllCities" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>
@@ -146,8 +127,8 @@
         <soap:body use="literal" />
       </wsdl:output>
     </wsdl:operation>
-    <wsdl:operation name="SaveSettings">
-      <soap:operation soapAction="http://tempuri.org/IWService/SaveSettings" style="document" />
+    <wsdl:operation name="CheckConnection">
+      <soap:operation soapAction="http://tempuri.org/IWService/CheckConnection" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>
@@ -159,15 +140,6 @@
   <wsdl:binding name="NetTcpBinding_IWService" type="tns:IWService">
     <wsp:PolicyReference URI="#NetTcpBinding_IWService_policy" />
     <soap12:binding transport="http://schemas.microsoft.com/soap/tcp" />
-    <wsdl:operation name="SetAuthData">
-      <soap12:operation soapAction="http://tempuri.org/IWService/SetAuthData" style="document" />
-      <wsdl:input>
-        <soap12:body use="literal" />
-      </wsdl:input>
-      <wsdl:output>
-        <soap12:body use="literal" />
-      </wsdl:output>
-    </wsdl:operation>
     <wsdl:operation name="GetCityName">
       <soap12:operation soapAction="http://tempuri.org/IWService/GetCityName" style="document" />
       <wsdl:input>
@@ -186,8 +158,8 @@
         <soap12:body use="literal" />
       </wsdl:output>
     </wsdl:operation>
-    <wsdl:operation name="GetCitiesList">
-      <soap12:operation soapAction="http://tempuri.org/IWService/GetCitiesList" style="document" />
+    <wsdl:operation name="GetAllCities">
+      <soap12:operation soapAction="http://tempuri.org/IWService/GetAllCities" style="document" />
       <wsdl:input>
         <soap12:body use="literal" />
       </wsdl:input>
@@ -204,8 +176,8 @@
         <soap12:body use="literal" />
       </wsdl:output>
     </wsdl:operation>
-    <wsdl:operation name="SaveSettings">
-      <soap12:operation soapAction="http://tempuri.org/IWService/SaveSettings" style="document" />
+    <wsdl:operation name="CheckConnection">
+      <soap12:operation soapAction="http://tempuri.org/IWService/CheckConnection" style="document" />
       <wsdl:input>
         <soap12:body use="literal" />
       </wsdl:input>

@@ -12,22 +12,44 @@ namespace WeatherService
     [ServiceContract]
     public interface IWService
     {
+        /// <summary>
+        /// Возвращает название города по указанному ID
+        /// </summary>
+        /// <param name="cityID">ID города</param>
+        /// <returns></returns>
         [OperationContract]
-        void SetAuthData(string server, uint port, string username, string password);
+        string GetCityName(int cityID);
 
+        /// <summary>
+        /// Возвращает ID города по указанному названию города
+        /// </summary>
+        /// <param name="cityName">Название города</param>
+        /// <returns></returns>
         [OperationContract]
-        string GetCityName(int id);
+        int GetCityId(string cityName);
 
+        /// <summary>
+        /// Возвращает список всех доступных городов
+        /// </summary>
+        /// <returns></returns>
         [OperationContract]
-        int GetCityId(string name);
+        Dictionary<int, string> GetAllCities();
 
-        [OperationContract]
-        Dictionary<int, string> GetCitiesList();
-
+        /// <summary>
+        /// Возвращает прогноз для указанного города на выбранный промежуток времени
+        /// </summary>
+        /// <param name="id">ID города</param>
+        /// <param name="date">Дата прогноза</param>
+        /// <param name="part">Часть суток</param>
+        /// <returns></returns>
         [OperationContract]
         WeatherItem GetWeather(int id, DateTime date, DayPart part);
 
+        /// <summary>
+        /// Функция для проверки связи с сервисом
+        /// </summary>
+        /// <returns></returns>
         [OperationContract]
-        void SaveSettings();
+        bool CheckConnection();
     }
 }

@@ -71,9 +71,9 @@
     <Content Include="Weather.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Weather\WeatherLib.csproj">
+    <ProjectReference Include="..\Weather\Weather.csproj">
       <Project>{bb380125-9dc7-4fb4-8a47-e084d699d285}</Project>
-      <Name>WeatherLib</Name>
+      <Name>Weather</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

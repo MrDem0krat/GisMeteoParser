@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GismeteoClient"
         mc:Ignorable="d"
-        Title="Настройки" Height="315.148" Width="480" Background="#FF237FAC" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True" WindowStartupLocation="CenterOwner" ScrollViewer.VerticalScrollBarVisibility="Disabled" Icon="pack://siteoforigin:,,,/Resources/graphics/SettingsWindowIcon.ico">
+        Title="Настройки" Height="280" Width="280" Background="#FF237FAC" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True" WindowStartupLocation="CenterOwner" ScrollViewer.VerticalScrollBarVisibility="Disabled" Icon="pack://siteoforigin:,,,/Resources/graphics/SettingsWindowIcon.ico">
     <Window.Resources>
         <Style x:Key="basicStyle" TargetType="{x:Type Control}">
             <Setter Property="FontSize" Value="14"/>
@@ -39,9 +39,7 @@
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="10"/>
-            <ColumnDefinition Width="1.2*"/>
-            <ColumnDefinition Width="10"/>
-            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="10"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
@@ -64,24 +62,12 @@
             <CheckBox x:Name="isMinimazeToTray" Content="Сворачивать в трей" IsChecked="True"/>
             <Separator/>
             <Button x:Name="ShowLog" Content="Просмотреть логи"/>
-        </StackPanel>
-        <DockPanel Grid.Row="1" Grid.Column="3">
-            <GroupBox x:Name="MysqlGroup" Header="MySQL-сервер" DockPanel.Dock="Top">
-                <StackPanel>
-                    <Label Content="Логин"/>
-                    <TextBox x:Name="Login"/>
-                    <Label Content="Пароль"/>
-                    <PasswordBox x:Name="Password"/>
-                    <Label Content="Сервер"/>
-                    <TextBox x:Name="Server"/>
-                    <Label Content="Порт"/>
-                    <TextBox x:Name="Port"/>
-                </StackPanel>
-            </GroupBox>
-            <DockPanel DockPanel.Dock="Bottom">
+            <Separator/>
+            <DockPanel DockPanel.Dock="Top">
+                <Button x:Name="Ok" Content="Ок" IsDefault="True" DockPanel.Dock="Left" Click="Ok_Click" Width="125"/>
                 <Button x:Name="Cancel" Content="Отмена" IsCancel="True" DockPanel.Dock="Right" Click="Cancel_Click"/>
-                <Button x:Name="Ok" Content="Ок" IsDefault="True" DockPanel.Dock="Right" Click="Ok_Click"/>
             </DockPanel>
-        </DockPanel>
+        </StackPanel>
+            
     </Grid>
 </Window>

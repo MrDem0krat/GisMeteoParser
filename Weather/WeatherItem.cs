@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Weather
 {
-    public class WeatherItem:IWeatherItem
+    public class WeatherItem : IWeatherItem, IComparable<IWeatherItem>
     {
         #region Свойства
         /// <summary>
@@ -89,11 +89,50 @@ namespace Weather
         }
         #endregion
 
-        public override string ToString() //подправить
+        public override string ToString()
         {
-            return string.Format("ID города: {10} \nДата прогноза: {0} \nВремя суток: {1} \nTeмпература: {2} \nОщущаемая температура: {3}\nСостояние: {4} \nИзображение: {5} \n" +
-                                    "Влажность: {6} \nДавление: {7} \nНаправление ветра: {8} \nСкорость ветра: {9}",
-                                    Date.ToShortDateString(), PartOfDay, Temperature, TemperatureFeel, Condition, TypeImage, Humidity, Pressure, WindDirection, WindSpeed, CityID);
+            return string.Format("ID города: {0} \n"+
+                    "Дата прогноза: {1} \n"+
+                    "Время суток: {2} \n"+
+                    "Teмпература: {3} \n"+
+                    "Ощущаемая температура: {4}\n" + 
+                    "Состояние: {5} \n"+
+                    "Изображение: {6} \n" +
+                    "Влажность: {7} \n"+
+                    "Давление: {8} \n"+
+                    "Направление ветра: {9} \n"+
+                    "Скорость ветра: {10}\n"+
+                    "Время обновления: {11}\n",
+                                    CityID, Date.ToShortDateString(), PartOfDay, Temperature, TemperatureFeel, Condition, TypeImage, Humidity, Pressure, WindDirection, WindSpeed, RefreshTime.ToString());
+        }
+
+        public string GetRusDayPartString()
+        {
+            switch (PartOfDay)
+            {
+                case DayPart.Night:
+                    return "Ночь";
+                case DayPart.Morning:
+                    return "Утро";
+                case DayPart.Day:
+                    return "День";
+                case DayPart.Evening:
+                    return "Вечер";
+                default:
+                    return "Not Found";
+            }
+        }
+
+        public int CompareTo(IWeatherItem other)
+        {
+            if (other != null)
+            {
+                if (Date > other.Date)
+                    return Date.CompareTo(other.Date);
+            }
+            else
+                throw new ArgumentException("Parameter is not IWeatherItem");
+            return -13;
         }
     }
 }

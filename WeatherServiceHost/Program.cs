@@ -2,8 +2,10 @@
 using NLog.Config;
 using NLog.Targets;
 using System;
+using System.Linq;
 using System.ServiceModel;
 using System.Text;
+using WeatherService;
 
 namespace WeatherServiceHost
 {
@@ -12,16 +14,139 @@ namespace WeatherServiceHost
         private static Logger _logger = LogManager.GetCurrentClassLogger();
         static void Main(string[] args)
         {
-            ConfigLogger();
-            using (var host = new ServiceHost(typeof(WeatherService.WService)))
+            using (var host = new ServiceHost(typeof(WService)))
             {
-                host.Open();
-                _logger.Debug("Host started...");
-                Console.WriteLine("Host started...");
-                Console.ReadLine();
+                bool isRun = true;
+                bool isChanged = false;
+                string answer = string.Empty;
+                string value = string.Empty;
+
+                Console.WriteLine(">>>\tGismeteo Weather Service\t<<<\n");
+                Console.WriteLine("Available commands:\n");
+                Console.WriteLine("{0,-20} - Start service", Command.start);
+                Console.WriteLine("{0,-20} - Set username for DB connection", Command.user + " [username]");
+                Console.WriteLine("{0,-20} - Set password for DB connection", Command.pass + " [password]");
+                Console.WriteLine("{0,-20} - Set server for DB connection", Command.server + " [server]");
+                Console.WriteLine("{0,-20} - Set port for DB connection", Command.port + " [port]");
+                Console.WriteLine("{0,-20} - Stop service and exit programm\n\n", Command.exit);
+
+                ConfigLogger();
+                _logger.Debug("Weather service started");
+                
+
+                while (isRun)
+                {
+                    answer = Console.ReadLine();
+
+                    var command = GetCommand((from cid in (int[])Enum.GetValues(typeof(Command)) where answer.StartsWith(Enum.GetName(typeof(Command), cid)) select cid).FirstOrDefault());
+
+                    switch (command)
+                    {
+                        case Command.start:
+                            if(host.State != CommunicationState.Opened)
+                            {
+                                host.Open();
+                                _logger.Debug("host.Open()");
+                                Console.WriteLine("Host started");
+                            }
+                            else
+                                Console.WriteLine("Host already started");
+                            break;
+
+
+                        case Command.exit:
+
+                            if (isChanged)
+                            {
+                                Console.WriteLine("Save settings? (y/n)\t");
+                                if (Console.ReadLine() == "y")
+                                {
+                                    WService.SaveSettings();
+                                    _logger.Debug("SaveSettings()");
+                                    _logger.Debug("host.Close()");
+                                } 
+                            }
+                            isRun = false;
+                            break;
+
+                        case Command.user:
+                            value = answer.Remove(0, Command.user.ToString().Length + 1);
+                            WService.SetUser(value);
+                            isChanged = true;
+                            _logger.Debug("DBuser = {0}", value);
+                            break;
+
+                        case Command.pass:
+                            value = answer.Remove(0, Command.pass.ToString().Length + 1);
+                            WService.SetPassword(value);
+                            isChanged = true;
+                            _logger.Debug("DBpassword updated");
+
+                            break;
+
+                        case Command.server:
+                            value = answer.Remove(0, Command.server.ToString().Length + 1);
+                            WService.SetServer(value);
+                            isChanged = true;
+                            _logger.Debug("DBserver = {0}", value);
+                            break;
+
+                        case Command.port:
+                            value = answer.Remove(0, Command.port.ToString().Length + 1);
+                            uint port = 0;
+                            if (uint.TryParse(value, out port) && port < 65535)
+                            {
+                                WService.SetPort(port);
+                                isChanged = true;
+                                _logger.Debug("DBport = {0}", port);
+                            }
+                            else
+                                Console.WriteLine("Wrong port value");
+                            break;
+                        case Command.none:
+                            Console.WriteLine("Command not found\n");
+                            break;
+                        default:
+                            Console.WriteLine("Command not found\n");
+                            break;
+                    }
+                }
+                _logger.Debug("Service closed");
             }
         }
-        
+
+        enum Command
+        {
+            none = 0,
+            start = 1,
+            exit = 2,
+            user = 3,
+            pass = 4 ,
+            server = 5,
+            port = 6            
+        }
+        private static Command GetCommand(int commandID)
+        {
+            switch (commandID)
+            {
+                case (int)Command.start:
+                    return Command.start;
+                case (int)Command.exit:
+                    return Command.exit;
+                case (int)Command.user:
+                    return Command.user;
+                case (int)Command.pass:
+                    return Command.pass;
+                case (int)Command.server:
+                    return Command.server;
+                case (int)Command.port:
+                    return Command.port;
+                default:
+                    return Command.none;
+
+            }
+        }
+
         static void ConfigLogger()
         {
             LoggingConfiguration config = new LoggingConfiguration();

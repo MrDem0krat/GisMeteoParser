@@ -8,13 +8,14 @@ using NLog.Config;
 using NLog.Targets;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Forms;
 
 namespace GismeteoClient
 {
     public static class Settings
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
-        
+
         /// <summary>
         /// Настраивает параметры ведения лога приложения
         /// </summary>
@@ -22,19 +23,34 @@ namespace GismeteoClient
         {
             LoggingConfiguration config = new LoggingConfiguration();
 
-            FileTarget fileTarget = new FileTarget();
-            config.AddTarget("file", fileTarget);
+            FileTarget target = new FileTarget();
+            config.AddTarget("full_file", target);
 
-            fileTarget.DeleteOldFileOnStartup = true; // Удалатья страый файл при запуске
-            fileTarget.KeepFileOpen = false; //Не держать файл открытым
-            fileTarget.ConcurrentWrites = true;
-            fileTarget.Encoding = Encoding.GetEncoding(1251); // Кодировка файла логов
-            fileTarget.ArchiveEvery = FileArchivePeriod.Day; // Период архивирования старых логов (нет смысла, если старый удаляется при запуске)
-            fileTarget.Layout = NLog.Layouts.Layout.FromString("${uppercase:${level}} | ${longdate} :\t${message}"); // Структура сообщения
-            fileTarget.FileName = NLog.Layouts.Layout.FromString("${basedir}/logs/${shortdate}.log"); //Структура названия файлов
-            fileTarget.ArchiveFileName = NLog.Layouts.Layout.FromString("${basedir}/logs/archives/{shortdate}.rar"); // Структура названия архивов
+            target.DeleteOldFileOnStartup = true; // Удалатья страый файл при запуске
+            target.KeepFileOpen = false; //Не держать файл открытым
+            target.ConcurrentWrites = true;
+            target.Encoding = Encoding.GetEncoding(1251); // Кодировка файла логов
+            target.ArchiveEvery = FileArchivePeriod.Day; // Период архивирования старых логов (нет смысла, если старый удаляется при запуске)
+            target.Layout = NLog.Layouts.Layout.FromString("${uppercase:${level}} | ${longdate} :\t${message}"); // Структура сообщения
+            target.FileName = NLog.Layouts.Layout.FromString("${basedir}/logs/${shortdate}.full.log"); //Структура названия файлов
+            target.ArchiveFileName = NLog.Layouts.Layout.FromString("${basedir}/logs/archives/{shortdate}full.rar"); // Структура названия архивов
 
-            LoggingRule ruleFile = new LoggingRule("*", LogLevel.Trace, fileTarget); // Минимальный уровень логгирования - Trace
+            LoggingRule ruleFile = new LoggingRule("*", LogLevel.Trace, target); // Минимальный уровень логгирования - Trace
+            config.LoggingRules.Add(ruleFile);
+
+            target = new FileTarget();
+            config.AddTarget("debug_file", target);
+
+            target.DeleteOldFileOnStartup = true;
+            target.KeepFileOpen = false;
+            target.ConcurrentWrites = true;
+            target.Encoding = Encoding.GetEncoding(1251);
+            target.ArchiveEvery = FileArchivePeriod.Day;
+            target.Layout = NLog.Layouts.Layout.FromString("${uppercase:${level}} | ${longdate} :\t${message}"); // Структура сообщения
+            target.FileName = NLog.Layouts.Layout.FromString("${basedir}/logs/${shortdate}.debug.log"); //Структура названия файлов
+            target.ArchiveFileName = NLog.Layouts.Layout.FromString("${basedir}/logs/archives/{shortdate}.debug.rar"); // Структура названия архивов
+
+            ruleFile = new LoggingRule("*", LogLevel.Debug, target);
             config.LoggingRules.Add(ruleFile);
 
             LogManager.Configuration = config;
@@ -44,14 +60,14 @@ namespace GismeteoClient
         /// Настраивает параметры и поведение иконки в трее
         /// </summary>
         /// <returns></returns>
-        public static System.Windows.Forms.NotifyIcon TrayIconConfig()
+        public static NotifyIcon TrayIconConfig()
         {
-            System.Windows.Forms.NotifyIcon TrayIcon = new System.Windows.Forms.NotifyIcon();
+            NotifyIcon TrayIcon = new NotifyIcon();
             TrayIcon.Icon = Properties.Resources.MainWindowIcon;
             TrayIcon.Text = "Gismeteo.Погода";
             TrayIcon.Click += delegate (object sender, EventArgs e)
             {
-                if ((e as System.Windows.Forms.MouseEventArgs).Button == System.Windows.Forms.MouseButtons.Left)
+                if ((e as MouseEventArgs).Button == MouseButtons.Left)
                 {
                     MainWindow.ShowHideMainWindow();
                 }
