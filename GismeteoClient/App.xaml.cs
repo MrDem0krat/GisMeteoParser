@@ -16,7 +16,7 @@ namespace GismeteoClient
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             GismeteoClient.MainWindow._splashScreen.Show(false, true);
-            Settings.LoggerConfig();
+            
         }
     }
 }

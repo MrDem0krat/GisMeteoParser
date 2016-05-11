@@ -58,10 +58,10 @@ namespace GismeteoClient
         {
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
             Application.Current.MainWindow.Hide();
+            Settings.LoggerConfig();
             InitializeComponent();
             TrayIcon = Settings.TrayIconConfig();
             TrayMenu = Resources["TrayMenu"] as ContextMenu;
-            GridWeatherWeek.Visibility = Visibility.Hidden;
             _logger.Debug("Settings loaded");
             _splashScreen.Close(TimeSpan.FromSeconds(0.5));
             Application.Current.MainWindow.Show();
@@ -192,51 +192,13 @@ namespace GismeteoClient
         }
 
         /// <summary>
-        /// Обработчик нажатия кнопки смены режима отображения прогноза
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void button_forecast_type_Click(object sender, RoutedEventArgs e)//убрать
-        {
-            if (GridWeatherDay.Visibility != Visibility.Hidden)
-            {
-                GridWeatherDay.Visibility = Visibility.Hidden;
-                GridWeatherWeek.Visibility = Visibility.Visible;
-                btnForecastType.Content = "Прогноз на сегодня";
-                btnMoveLeft.IsEnabled = false;
-                btnMoveRight.IsEnabled = true;
-            }
-            else
-            {
-                GridWeatherWeek.Visibility = Visibility.Hidden;
-                GridWeatherDay.Visibility = Visibility.Visible;
-                btnForecastType.Content = "Прогноз на 8 дней";
-            }
-        }
-
-
-        private void button_last_days_Click(object sender, RoutedEventArgs e)//убрать
-        {
-            //Task.Factory.StartNew(() => RefreshWeekAsync(4));
-            btnMoveRight.IsEnabled = false;
-            btnMoveLeft.IsEnabled = true;
-        }
-        
-        private void button_first_days_Click(object sender, RoutedEventArgs e)//убрать
-        {
-            //Task.Factory.StartNew(() => RefreshWeekAsync(0));
-            btnMoveLeft.IsEnabled = false;
-            btnMoveRight.IsEnabled = true;
-        }
-
-        /// <summary>
         /// Обработчик нажатия кнопки Тест
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void test_button_Click(object sender, RoutedEventArgs e)
         {
-            _logger.Debug("Нажата тестовая кнопка настроек");
+            _logger.Debug("Нажата тестовая кнопка");
         }
 
         // Обработчики нажатий пунков контекстного меню иконки в трее
@@ -305,6 +267,7 @@ namespace GismeteoClient
             lblHumidityNow.ToolTip = string.Format("{0}%", weather.Humidity);
             lblWeatherTypeNow.Content = weather.Condition;
             lblWeatherTypeNow.ToolTip = weather.Condition;
+            //TODO: Add Image selection
         }
 
         /// <summary>
@@ -322,7 +285,7 @@ namespace GismeteoClient
             var temperature = FindName("lblTemperature_" + (int)part) as Label;
             var image = FindName("imgWeather_" + (int)part) as Image;
 
-            date.Content = string.Format("{0} ({1})", weather.Date.ToShortDateString(), weather.GetRusDayPartString());
+            date.Content = string.Format("{0} ({1})", weather.Date.ToShortDateString(), weather.GetRusDayPart());
             condition.Content = weather.Condition;
             condition.ToolTip = weather.Condition;
             humidity.Content = string.Format("Влажность: {0}%", weather.Humidity);
@@ -337,103 +300,60 @@ namespace GismeteoClient
             _wImage.BeginInit();
             _wImage.UriSource = new Uri("Resources/graphics/weather_icons/bkn_n.png", UriKind.Relative);
             _wImage.EndInit();
-            image.Source = _wImage;
+            image.Source = _wImage; //TODO: Add Image selection
             image.ToolTip = weather.TypeImage;
         }
 
         /// <summary>
         /// Обновляет информацию, отображаемую в главном окне
         /// </summary>
-        //public void RefreshMainWndData()
-        //{
-        //    WeatherItem item = new WeatherItem();
-        //    var defaultWeather = new WeatherItem();
-        //    if (isServiceAvailable)
-        //        Task.Run(() => 
-        //        {
-        //            int addDays = 1;
-        //            bool isForecastFound = false;
-        //            while (!isForecastFound)
-        //            {
-        //                item = Service.GetWeather(Properties.Settings.Default.USCityID, DateTime.Today.AddDays(addDays), DayPart.Day);
-        //                if(item == defaultWeather)
-        //                {
-        //                    addDays--;
-        //                }
-        //                else
-        //                {
-        //                    isForecastFound = true;
-        //                }
-        //            }
-        //            Properties.Settings.Default.LastForecastNow = item;
-        //            Dispatcher.Invoke(() =>
-        //            {
-        //                ViewWeatherInfoNow(item);
-        //            });
-
-        //            for (int i = 0; i < 4; i++)
-        //            {
-        //                item = new WeatherItem();
-        //                item = Service.GetWeather(Properties.Settings.Default.USCityID, DateTime.Today.AddDays(addDays), (DayPart)i);
-        //                Properties.Settings.Default["LastForecast" + (DayPart)i] = item;
-        //                Dispatcher.Invoke(() =>
-        //                {
-        //                    ViewWeatherInfoDayPart(item, (DayPart)i);
-        //                });
-        //            }
-        //        });
-        //    else
-        //    {
-        //        ViewWeatherInfoNow(Properties.Settings.Default.LastForecastNow); //dispatcher
-        //        for (int i = 0; i < 4; i++)
-        //        {
-        //            ViewWeatherInfoDayPart(Properties.Settings.Default["LastForecast" + (DayPart)i] as WeatherItem, (DayPart)i); //dispatcher
-        //        }
-        //    }
-        //}
-
         public void RefreshMainWndData()
         {
             WeatherItem item = new WeatherItem();
-            if (isServiceAvailable)
+            Task.Factory.StartNew(() =>
             {
-                int addDays = 1;
-                bool isForecastFound = false;
-                while (!isForecastFound)
+                if (Service.Connect())
                 {
-                    item = Service.GetWeather(Properties.Settings.Default.USCityID, DateTime.Today.AddDays(addDays), DayPart.Day);
-                    if (item.CityID == 0)
+                    int addDays = 1;
+                    bool isForecastFound = false;
+                    // Ищем последний доступный прогноз 
+                    // TODO: оптимизировать поиск последнего доступного прогноза, добавить ограничение на кол-во попыток
+                    while (!isForecastFound)
                     {
-                        addDays--;
+                        item = Service.GetWeather(Properties.Settings.Default.USCityID, DateTime.Today.AddDays(addDays), DayPart.Day);
+                        if (item.CityID == 0)
+                        {
+                            addDays--;
+                        }
+                        else
+                        {
+                            isForecastFound = true;
+                        }
                     }
-                    else
-                    {
-                        isForecastFound = true;
-                    }
-                }
-                Properties.Settings.Default.LastForecastNow = item;
-                ViewWeatherInfoNow(item);
+                    Properties.Settings.Default.LastForecastNow = item;
+                    Dispatcher.Invoke(() => ViewWeatherInfoNow(item));
 
-                for (int i = 0; i < 4; i++)
-                {
-                    item = new WeatherItem();
-                    item = Service.GetWeather(Properties.Settings.Default.USCityID, DateTime.Today.AddDays(addDays), (DayPart)i);
-                    Properties.Settings.Default["LastForecast" + (DayPart)i] = item;
-                    ViewWeatherInfoDayPart(item, (DayPart)i);
+                    for (int i = 0; i < 4; i++)
+                    {
+                        item = new WeatherItem();
+                        item = Service.GetWeather(Properties.Settings.Default.USCityID, DateTime.Today.AddDays(addDays), (DayPart)i);
+                        Properties.Settings.Default["LastForecast" + (DayPart)i] = item;
+                        Dispatcher.Invoke(() => ViewWeatherInfoDayPart(item, (DayPart)i));
+                    }
                 }
-            }
-            else
-            {
-                ViewWeatherInfoNow(Properties.Settings.Default.LastForecastNow);
-                for (int i = 0; i < 4; i++)
+                else
                 {
-                    ViewWeatherInfoDayPart(Properties.Settings.Default["LastForecast" + (DayPart)i] as WeatherItem, (DayPart)i);
+                    Dispatcher.Invoke(() =>
+                    {
+                        ViewWeatherInfoNow(Properties.Settings.Default.LastForecastNow);
+                        for (int i = 0; i < 4; i++)
+                        {
+                            ViewWeatherInfoDayPart(Properties.Settings.Default["LastForecast" + (DayPart)i] as WeatherItem, (DayPart)i);
+                        }
+                    });
                 }
-            }
+            });
         }
-
-
-
         #endregion
     }
 }

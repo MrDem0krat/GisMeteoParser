@@ -1,11 +1,10 @@
 ﻿using HtmlAgilityPack;
+using NLog;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Threading;
-using NLog;
 using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 using Weather;
 
 namespace ParserLib
@@ -13,10 +12,43 @@ namespace ParserLib
     public class Parser : IParser
     {
         /// <summary>
+        /// Делегат функции, выполняющей выборку необходимых данных со страницы сайта
+        /// </summary>
+        /// <param name="_source">HTML-страница, для которой должна осуществляться выборка данных</param>
+        /// <param name="dayToParse">День, кля которого необходимо прочитать прогноз</param>
+        /// <param name="dayPart">Часть дня, кля которой необходимо прочитать прогноз</param>
+        /// <returns></returns>
+        public delegate IWeatherItem ParserGetDataHandler(HtmlDocument _source, DayToParse dayToParse = DayToParse.Tomorrow, DayPart dayPart = DayPart.Day);
+        /// <summary>
+        /// Объект для хранения ссылки на метод, выполняющий выборку информации со страницы
+        /// </summary>
+        private ParserGetDataHandler parserHandler;
+
+        /// <summary>
+        /// Логгер
+        /// </summary>
+        private static Logger _logger = LogManager.GetCurrentClassLogger();
+
+        /// <summary>
+        /// Обрабатываемый Html-документ с прогнозом погоды
+        /// </summary>
+        private HtmlDocument _weatherDocument = new HtmlDocument();
+      
+        /// <summary>
+        /// Ссылка на поток в котором выполняется функция парсинга
+        /// </summary>
+        private Thread parserThread;
+
+        /// <summary>
+        /// Поле для хранения пользовательского значения периода обновления, на случай потери соединения с интернетом
+        /// </summary>
+        private TimeSpan settedRefreshPeriod;
+
+        #region События для оповещения вызывающего кода о состоянии парсера
+        /// <summary>
         /// Получен новый прогноз погоды
         /// </summary>
         public event EventHandler<WeatherParsedEventArgs> WeatherParsed;
-        //События для оповещения вызывающего кода о состоянии парсера
         /// <summary>
         /// Парсер зарущен
         /// </summary>
@@ -29,42 +61,20 @@ namespace ParserLib
         /// Парсер остановлен
         /// </summary>
         public event EventHandler ParserStopped;
-
         /// <summary>
-        /// Делегат функции, выполняющей выборку необходимых данных со страницы сайта
+        /// Произошла ошибка во время парсинга
         /// </summary>
-        /// <param name="_source">HTML-страница, для которой должна осуществляться выборка данных</param>
-        /// <param name="dayToParse">День, кля которого необходимо прочитать прогноз</param>
-        /// <param name="dayPart">Часть дня, кля которой необходимо прочитать прогноз</param>
-        /// <returns></returns>
-        public delegate IWeatherItem ParserGetDataHandler(HtmlDocument _source, DayToParse dayToParse = DayToParse.Tomorrow, DayPart dayPart = DayPart.Day);
-
-        /// <summary>
-        /// Логгер
-        /// </summary>
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
-
-        /// <summary>
-        /// Обрабатываемый Html-документ с прогнозом погоды
-        /// </summary>
-        private HtmlDocument _weatherDocument = new HtmlDocument();
-        /// <summary>
-        /// Объект для хранения ссылки на метод, выполняющий выборку информации со страницы
-        /// </summary>
-        private ParserGetDataHandler parserHandler;
-        /// <summary>
-        /// Ссылка на поток в котором выполняется функция парсинга
-        /// </summary>
-        private Thread parserThread;
+        public event EventHandler<Exception> ErrorOccured;
+        #endregion
 
         #region Свойства
         /// <summary>
-        /// Период обновления
+        /// Периодичность запуска парсера
         /// </summary>
         public TimeSpan RefreshPeriod { get; set; }
 
         /// <summary>
-        /// Перечень городов, для которых требуется прогноз вида НазваниеГорода:ID
+        /// Перечень городов, для которых требуется прогноз вида {ID : Название города}
         /// </summary>
         public Dictionary<int, string> Cities { get; set; }
 
@@ -95,7 +105,7 @@ namespace ParserLib
 
         #region Конструкторы
         public Parser() { }
-        public Parser(string url) : this(url, TimeSpan.FromMinutes(5), new Dictionary<int, string>()) { }
+        public Parser(string url) : this(url, TimeSpan.FromMinutes(30), new Dictionary<int, string>()) { }
         public Parser(string url, TimeSpan refreshPeriod) : this(url, refreshPeriod, new Dictionary<int, string>()) { }
         public Parser(string url, TimeSpan refreshPeriod, Dictionary<int, string> cities)
         {
@@ -115,27 +125,27 @@ namespace ParserLib
         {
             WebClient client = new WebClient();
             string _response;
+            bool result = false;
             try
             {
                 _response = client.DownloadString("http://www.ya.ru");
-                if (_response.Contains("b-table__row layout__search"))// лучше поменять на != null ?
+                if (_response.Contains("b-table__row layout__search"))
                 {
-                    _logger.Debug("Internet Connecton checked succesfully");
-                    return true;
+                    _logger.Debug("CheckConnecton() = success");
+                    result = true;
                 }
             }
-            catch (WebException _ex)
+            catch (WebException ex)
             {
-                _logger.Error("Check your internet connection");
-                _logger.Debug(string.Format("Internet connection error: {0}", _ex.Message));
+                _logger.Warn(string.Format("Internet connection error. Message: {0}", ex.Message));
+                result = false;
             }
-            return false;
+            client.Dispose();
+            return result;
         }
         public static Task<bool> CheckConnectionAsync()
         {
-            var task = new Task<bool>(() => CheckConnection());
-            task.Start();
-            return task;
+            return Task.Factory.StartNew(() => CheckConnection());
         }
 
         /// <summary>
@@ -145,39 +155,38 @@ namespace ParserLib
         /// <returns></returns>
         public static HtmlDocument DownloadPage(string Url)
         {
-            HtmlWeb _client = new HtmlWeb();
-            HtmlDocument _doc = new HtmlDocument();
+            HtmlWeb client = new HtmlWeb();
+            HtmlDocument result = new HtmlDocument();
             try
             {
-                _logger.Debug("Try to load weather webpage");
-                _doc = _client.Load(Url);
-                _logger.Debug("Webpage loaded successfully");
-                return _doc;
+                _logger.Trace("Trying to load weather webpage");
+                result = client.Load(Url);
+                _logger.Debug("DownloadPage() = success");
             }
             catch (HtmlWebException webEx)
             {
-                _logger.Error("FileLoadError: " + webEx.Message, webEx);
-                return null;
+                _logger.Warn("FileLoadError: " + webEx.Message, webEx);
+                result = new HtmlDocument();
             }
             catch (Exception ex)
             {
-                _logger.Error("Error: cannot load file. Reason: {0}", ex.Message);
-                return null;
+                _logger.Warn("Error: cannot load file. Reason: {0}", ex.Message);
+                result = new HtmlDocument();
             }
+            return result;
         }
 
-        //Добавить загрузку прогноза на остальные части дня
         /// <summary>
         /// Запуск работы парсера в отдельном потоке
         /// </summary>
         /// <param name="prms"></param>
         /// <returns></returns>
-        public async Task StartAsync(params string[] prms)
+        public void Start(params string[] prms)
         {
-            string _errorText = string.Empty;
-            Exception ex = null;
             IWeatherItem weather;
-            await Task.Run(() =>
+            settedRefreshPeriod = RefreshPeriod;
+
+            Task.Factory.StartNew(() =>
             {
                 parserThread = Thread.CurrentThread;
                 try
@@ -191,6 +200,8 @@ namespace ParserLib
                         Status = ParserStatus.Working;
                         if (CheckConnection())
                         {
+                            if (RefreshPeriod != settedRefreshPeriod)
+                                RefreshPeriod = settedRefreshPeriod;
                             if (parserHandler != null)
                             {
                                 foreach (var city in Cities)
@@ -207,13 +218,14 @@ namespace ParserLib
                                         }
                                     }
                                 }
+                                LastRefresh = DateTime.Now;
                             }
-                            LastRefresh = DateTime.Now;
                         }
                         else
                         {
-                            _errorText = "Connection error. Check your Internet connection!";
-                            ex = new WebException(_errorText, WebExceptionStatus.ConnectFailure);
+                            if (ErrorOccured != null)
+                                ErrorOccured(this, new Exception("Connection error. Check your Internet connection!"));
+                            RefreshPeriod = new TimeSpan(0, 0, 30);
                         }
                         if (ParserAsleep != null)
                             ParserAsleep(this, new EventArgs());
@@ -225,87 +237,25 @@ namespace ParserLib
                 {
                     if (Status == ParserStatus.Working)
                     {
-                        Console.WriteLine("Parser has been aborted while working. Writing info to database cancelled.");
                         Status = ParserStatus.Aborted;
+                        throw new Exception("Parser has been aborted while working. Writing info to database cancelled.");
                     }
                     if (Status == ParserStatus.Sleeping)
                     {
-                        Console.WriteLine("Parser has been safely stopped");
                         Status = ParserStatus.Stoped;
                     }
+                }
+                catch (Exception ex)
+                {
+                    if (ErrorOccured != null)
+                        ErrorOccured(this, ex);
                 }
             });
         }
 
         /// <summary>
-        /// Запуск работы парсера в отдельном потоке
+        /// Остановка парсера
         /// </summary>
-        /// <param name="prms"></param>
-        /// <returns></returns>
-        //public void Start(params string[] prms)
-        //{
-            
-        //    string _errorText = string.Empty;
-        //    Exception ex = null;
-        //    IWeatherItem weather;
-        //    Status = ParserStatus.Working;
-        //    parserThread = Thread.CurrentThread;
-        //    try
-        //    {
-        //        while (true)
-        //        {
-        //            if (ParserStarted != null)
-        //            {
-        //                ParserStarted(this, new EventArgs());
-        //            }
-        //            Status = ParserStatus.Working;
-        //            if (CheckConnection())
-        //            {
-        //                if (parserHandler != null)
-        //                {
-        //                    foreach (var city in Cities)
-        //                    {
-        //                        _weatherDocument = DownloadPage(TargetUrl + city.Key);
-        //                        for (int i = 0; i < 4; i++)
-        //                        {
-        //                            weather = ParserHandler(_weatherDocument, dayPart: (DayPart)i);
-        //                            weather.CityID = city.Key;
-        //                            weather.RefreshTime = DateTime.Now;
-        //                            if (WeatherParsed != null)
-        //                            {
-        //                                WeatherParsed(this, new WeatherParsedEventArgs(weather, DateTime.Now));
-        //                            }
-        //                        }
-        //                    }
-        //                }
-        //            }
-        //            else
-        //            {
-        //                _errorText = "Connection error. Check your Internet connection!";
-        //                ex = new WebException(_errorText, WebExceptionStatus.ConnectFailure);
-        //            }
-        //            LastRefresh = DateTime.Now;
-        //            if (ParserAsleep != null)
-        //                ParserAsleep(this, new EventArgs());
-        //            Status = ParserStatus.Sleeping;
-        //            Thread.Sleep(RefreshPeriod);
-        //        }
-        //    }
-        //    catch (ThreadAbortException)
-        //    {
-        //        if (Status == ParserStatus.Working)
-        //        {
-        //            Console.WriteLine("Parser has been aborted while working. Writing info to database cancelled.");
-        //            Status = ParserStatus.Aborted;
-        //        }
-        //        if (Status == ParserStatus.Sleeping)
-        //        {
-        //            Console.WriteLine("Parser has been safely stopped");
-        //            Status = ParserStatus.Stoped;
-        //        }
-        //    }
-        //}
-
         public void Stop()
         {
             if (parserThread != null)
@@ -320,13 +270,18 @@ namespace ParserLib
         #region IDisposable Support
         private bool disposedValue = false; // Для определения избыточных вызовов
 
+        /// <summary>
+        /// Освобождение ресурсов парсера
+        /// </summary>
+        /// <param name="disposing"></param>
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
                 if (disposing)
                 {
-
+                    _weatherDocument = new HtmlDocument();
+                    parserThread = null;
                     // DO: освободить управляемое состояние (управляемые объекты).
                 }
 

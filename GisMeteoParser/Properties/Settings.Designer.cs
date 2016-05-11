@@ -115,5 +115,53 @@ namespace GisMeteoWeather.Properties {
                 this["TableCityName"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool isServerSaved {
+            get {
+                return ((bool)(this["isServerSaved"]));
+            }
+            set {
+                this["isServerSaved"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool isPortSaved {
+            get {
+                return ((bool)(this["isPortSaved"]));
+            }
+            set {
+                this["isPortSaved"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool isUserSaved {
+            get {
+                return ((bool)(this["isUserSaved"]));
+            }
+            set {
+                this["isUserSaved"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool isPasswordSaved {
+            get {
+                return ((bool)(this["isPasswordSaved"]));
+            }
+            set {
+                this["isPasswordSaved"] = value;
+            }
+        }
     }
 }

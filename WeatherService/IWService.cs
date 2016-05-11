@@ -8,7 +8,6 @@ using Weather;
 
 namespace WeatherService
 {
-    // ПРИМЕЧАНИЕ. Команду "Переименовать" в меню "Рефакторинг" можно использовать для одновременного изменения имени интерфейса "IWService" в коде и файле конфигурации.
     [ServiceContract]
     public interface IWService
     {

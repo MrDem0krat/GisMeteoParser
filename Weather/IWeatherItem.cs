@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Weather
 {
@@ -76,7 +72,7 @@ namespace Weather
         /// </summary>
         /// <param name="part">Часть суток для перевода</param>
         /// <returns></returns>
-        string GetRusDayPartString();
+        string GetRusDayPart();
     }
 
     

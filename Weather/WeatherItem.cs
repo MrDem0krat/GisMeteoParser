@@ -106,7 +106,7 @@ namespace Weather
                                     CityID, Date.ToShortDateString(), PartOfDay, Temperature, TemperatureFeel, Condition, TypeImage, Humidity, Pressure, WindDirection, WindSpeed, RefreshTime.ToString());
         }
 
-        public string GetRusDayPartString()
+        public string GetRusDayPart()
         {
             switch (PartOfDay)
             {

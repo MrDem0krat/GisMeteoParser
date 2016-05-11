@@ -1,15 +1,14 @@
-﻿using System;
+﻿using DataBaseWeather;
+using HtmlAgilityPack;
+using NLog;
+using NLog.Config;
+using NLog.Targets;
+using ParserLib;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using HtmlAgilityPack;
-using NLog;
 using System.Text.RegularExpressions;
-using ParserLib;
-using DataBaseWeather;
-using NLog.Config;
-using NLog.Targets;
 using Weather;
 
 
@@ -22,7 +21,20 @@ namespace GisMeteoWeather
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
         private static Dictionary<int, string> cities = new Dictionary<int, string>();
-        private static Parser parser = new Parser();
+        private static Parser _parser = new Parser();
+
+        private static Properties.Settings defSet = Properties.Settings.Default;
+        
+        /// <summary>
+        /// Введены ли сведения для подключения к базе данных
+        /// </summary>
+        private static bool isDbInfoSetted
+        {
+            get
+            {
+                return defSet.isUserSaved && defSet.isPasswordSaved && defSet.isServerSaved && defSet.isPortSaved;
+            }
+        }
 
         /// <summary>
         /// Список полученных прогнозов
@@ -147,7 +159,7 @@ namespace GisMeteoWeather
             catch(Exception ex)
             {
                 HasError = true;
-                _logger.Error("Error: "+ ex.Message);
+                _logger.Error("Error occured while parsing '{0}'('{1}'). Message: {2}", dayToParse, partOfDay, ex.Message);
             }
 
             if (!HasError)
@@ -161,23 +173,22 @@ namespace GisMeteoWeather
         /// Функция возвращает список вида НазваниеГорода:ID
         /// </summary>
         /// <returns></returns>
-        public static Dictionary<int, string> GetCityList() //тест
+        public static Dictionary<int, string> ParseCityList()
         {
-            HtmlWeb _web = new HtmlWeb();
-            Dictionary<int, string> _cityDictionary = new Dictionary<int, string>();
+            Dictionary<int, string> result = new Dictionary<int, string>();
             bool hasError = false;
-            string _target = "https://www.gismeteo.ru";
+            string target = "https://www.gismeteo.ru";
             string buffer = "";
-            int _id;
+            int id;
             List<string> wrapIdList = new List<string>() { "cities-teaser", "cities1", "cities2", "cities3" };
-            Regex reg = new Regex(@"[\d]{1,}");
+            Regex regId = new Regex(@"[\d]{1,}");
+            HtmlDocument mainPage = Parser.DownloadPage(target);
 
-            HtmlDocument _mainPage = Parser.DownloadPage(_target);
             try
             {
                 foreach (string wrapID in wrapIdList)
                 {
-                    var citiesListNode = _mainPage.GetElementbyId(wrapID).Elements("div").Where(x => x.GetAttributeValue("class", "") == "cities");
+                    var citiesListNode = mainPage.GetElementbyId(wrapID).Elements("div").Where(x => x.GetAttributeValue("class", "") == "cities");
                     foreach (var cityNode in citiesListNode)
                     {
                         var ulNodes = cityNode.Elements("ul");
@@ -187,10 +198,10 @@ namespace GisMeteoWeather
                             foreach (var liNode in liNodes)
                             {
                                 buffer = liNode.Element("a").GetAttributeValue("href", "");
-                                buffer = reg.Match(buffer).Value;
-                                if (int.TryParse(buffer, out _id))
-                                    if (!_cityDictionary.ContainsKey(_id))
-                                        _cityDictionary.Add(_id, liNode.Element("a").InnerText);
+                                buffer = regId.Match(buffer).Value;
+                                if (int.TryParse(buffer, out id))
+                                    if (!result.ContainsKey(id))
+                                        result.Add(id, liNode.Element("a").InnerText);
                             }
                         }
                     }
@@ -201,8 +212,11 @@ namespace GisMeteoWeather
                 hasError = true;
                 _logger.Error("Can't get main page city list: ", ex.Message);
             }
+
+            wrapIdList.Clear();
+
             if (!hasError)
-                return _cityDictionary;
+                return result;
             else
                 return new Dictionary<int, string>();
         }
@@ -213,160 +227,355 @@ namespace GisMeteoWeather
         public static void Setup()
         {
             LoggerConfig();
-            _logger.Debug("Приложение запущено");
-            _logger.Debug("Запущена проверка и подготовка необходимой базы данных");
-            DataBase.Prepare(); 
-            _logger.Debug("Проверка наличия новых городов на главной странице сайта");
-            parser.Cities = GetCityList();
-            var citylist = DataBase.ReadCityList();
-            Dictionary<int, string> other = new Dictionary<int, string>();
-
-            if (!parser.Cities.Equals(citylist))
-                foreach (var newcity in parser.Cities)
-                {
-                    if (!citylist.ContainsKey(newcity.Key))
-                        other.Add(newcity.Key,newcity.Value);
-                }
-            if(other.Count > 0)
-            {
-                _logger.Debug("Доступны новые города в списке. Добавляем их в базу данных ");
-                DataBase.WriteCityList(other);
-            }
-
-            _logger.Debug("Настройка параметров парсера");
-            parser.TargetUrl = Properties.Resources.TargetSiteUrl;
-            parser.RefreshPeriod = new TimeSpan(0, 30, 0);
-            parser.ParserHandler = new Parser.ParserGetDataHandler(ParseWeatherData);
+            _logger.Info("Application started");
+            bool isSettingDone = false;
+            string _answer = string.Empty;
+            
+            _logger.Debug("Setting default parser paramms");
+            _parser.TargetUrl = Properties.Resources.TargetSiteUrl;
+            _parser.RefreshPeriod = new TimeSpan(0, 30, 0);
+            _parser.ParserHandler = new Parser.ParserGetDataHandler(ParseWeatherData);
             WeatherInfoList = new List<WeatherItem>();
 
-            parser.WeatherParsed += parser_WeatherParsed;
-            parser.ParserStarted += parser_Started;
-            parser.ParserStopped += parser_Stopped;
-            parser.ParserAsleep += parser_Asleep;
-            _logger.Debug("Парсер успешно настроен");
-        }
+            _parser.WeatherParsed += parser_WeatherParsed;
+            _parser.ParserStarted += parser_Started;
+            _parser.ParserStopped += parser_Stopped;
+            _parser.ParserAsleep += parser_Asleep;
+            _parser.ErrorOccured += parser_ErrorOccured;
 
-        /// <summary>
-        /// Выводит в консоль список городов, полученных с главной страницы GisMeteo
-        /// </summary>
-        /// <param name="source">Список городов</param>
-        public static void PrintCityList(Dictionary<int,string> source)
-        {
-            foreach (var item in source)
-                Console.WriteLine("ID: " + item.Key + "\tName: " + item.Value);
-        } //test; later remove
+            do
+            {
+                if (isDbInfoSetted)
+                {
+                    _logger.Trace("Preparing database");
+                    DataBase.Prepare();
+                    _logger.Trace("Checking new cities on the gismeteo main page");
+
+                    _parser.Cities = ParseCityList();
+                    var citylist = DataBase.ReadCityList();
+                    Dictionary<int, string> other = new Dictionary<int, string>();
+
+                    var newCities = _parser.Cities.Except(citylist).ToList();
+
+                    if (newCities.Count != 0)
+                    {
+                        foreach (var item in newCities)
+                        {
+                            other.Add(item.Key, item.Value);
+                        }
+                        _logger.Trace("New cities available. Adding to database");
+                        DataBase.WriteCityList(other);
+                    }
+                    isSettingDone = true;
+                }
+                else
+                {
+                    Console.WriteLine("Set connection information to continue...\n");
+                    Console.WriteLine("{0,-20} - set DB username", Command.SetUser.ToString().ToLower() + " [username]");
+                    Console.WriteLine("{0,-20} - set DB password", Command.SetPassword.ToString().ToLower());
+                    Console.WriteLine("{0,-20} - set DB server", Command.SetServer.ToString().ToLower() + " [server]");
+                    Console.WriteLine("{0,-20} - set DB port\n", Command.SetPort.ToString().ToLower() + " [port]");
+                    do
+                    {
+                        _answer = Console.ReadLine();
+                        RunCommand(_answer);
+                    } while (!isDbInfoSetted);
+                } 
+            } while (!isSettingDone);
+
+            _logger.Debug("Parser setting completed");
+        }
        
         /// <summary>
         /// Обработчик пользовательского ввода
         /// </summary>
-        /// <param name="command"></param>
-        public static void RunCommand(string command) //переделать, убрать отладочные функции
+        /// <param name="answer">Команда. введенная пользователем</param>
+        public static void RunCommand(string answer)
         {
+            string value = string.Empty;
+
+            var command = GetCommand(answer);
+
             switch (command)
             {
-                case "?":
-                    Console.WriteLine("Список доступных команд:\n\n"+
-                        "{0,-20}Запустить парсер\n"+
-                        "{1,-20}Остановить парсер\n"+
-                        "{2,-20}Текущий статус парсера\n"+
-                        "{3,-20}Загрузить список городов с главной страницы\n"+
-                        "{4,-20}Подготовить базу данных для работы\n"+
-                        "{5,-20}Записать список городов в базу данных\n"+
-                        "{6,-20}Получить название города по ИД\n"+
-                        "{7,-20}Ввести пароль к БД (root)\n" +
-                        "{8,-20}Остановить парсер и закрыть приложение\n",
-                                        "start", "stop", "status", "load cl", "prepare", "write cl","getl", "password", "exit");
+                case Command.Start:
+                    if (_parser.Status != ParserStatus.Working || _parser.Status != ParserStatus.Sleeping)
+                        _parser.Start();
+                    else
+                        Console.WriteLine("Parser already working");
                     break;
 
-                case "exit":
-                    Program.isRun = false;
-                    if (parser.Status == ParserStatus.Working || parser.Status == ParserStatus.Sleeping)
-                    {
-                        parser.Stop();
-                    }
+                case Command.Stop:
+                    if (_parser.Status != ParserStatus.Aborted || _parser.Status != ParserStatus.Stoped)
+                        _parser.Stop();
+                    else
+                        Console.WriteLine("Parser already stopped");
                     break;
 
-                case "stop":
-                    if (parser.Status == ParserStatus.Working || parser.Status == ParserStatus.Sleeping)
+                case Command.Status:
+                    Console.WriteLine("Parser status is: {0}", _parser.Status);
+                    break;
+
+                case Command.SetPeriod:
+                    value = answer.Replace(" ", "");
+                    value = value.Remove(0, Command.SetPeriod.ToString().Length);
+                    int minutes;
+                    if (int.TryParse(value, out minutes))
                     {
-                        parser.Stop();
+                        _parser.RefreshPeriod = new TimeSpan(0, minutes, 0);
+                        _logger.Debug("Parser.RefreshPeriod = {0}", _parser.RefreshPeriod.ToString());
                     }
                     else
-                    {
-                        Console.WriteLine("Парсер уже остановлен!");
-                    }
+                        Console.WriteLine("Incorrect value. Try again");
+                    value = string.Empty;
                     break;
 
-                case "start":
-                    if (parser.Status == ParserStatus.Stoped || parser.Status == ParserStatus.Aborted)
+                case Command.CityId:
+                    value = answer.Replace(" ", "");
+                    value = value.Remove(0, Command.CityId.ToString().Length);
+                    int id;
+                    if (int.TryParse(value, out id))
+                        Console.WriteLine("Name of {0} is {1}", id, DataBase.ReadCityName(id));
+                    else
+                        Console.WriteLine("Incorrect value. Try again");
+                    value = string.Empty;
+                    break;
+
+                case Command.SetUser:
+                    value = answer.Replace(" ", "");
+                    value = value.Remove(0, Command.SetUser.ToString().Length);
+                    if(value.Length != 0)
                     {
-#pragma warning disable CS4014 // Так как этот вызов не ожидается, выполнение существующего метода продолжается до завершения вызова
-                        parser.StartAsync();
-#pragma warning restore CS4014 // Так как этот вызов не ожидается, выполнение существующего метода продолжается до завершения вызова
+                        DataBase.Username = value;
+                        DataBase.SaveSettings();
+                        defSet.isUserSaved = true;
+                        defSet.Save();
                     }
                     else
+                        Console.WriteLine("Incorrect value. Try again");
+                    value = string.Empty;
+                    break;
+
+                case Command.SetPassword:
+                    ConsoleKeyInfo key;
+
+                    Console.Write("Enter password: ");
+                    do
                     {
-                        Console.WriteLine("Парсер уже запущен!");
-                    }
-                    break;
-
-                case "status":
-                    Console.WriteLine("Статус парсера: {0}", parser.Status);
-                    break;
-
-                case "password":
-                    Console.Write("Введите пароль: ");
-                    DataBase.Password = Console.ReadLine();
+                        key = Console.ReadKey(true);
+                        if (key.Key == ConsoleKey.Enter)
+                            break;
+                        if (key.Key == ConsoleKey.Backspace)
+                        {
+                            if (value.Length != 0)
+                            {
+                                value = value.Remove(value.Length - 1);
+                                Console.Write("\b \b");
+                            }
+                        }
+                        else
+                        {
+                            value += key.KeyChar;
+                            Console.Write("*");
+                        }
+                    } while (true);
+                    Console.WriteLine();
+                    DataBase.Password = value;
                     DataBase.SaveSettings();
-                    Console.WriteLine("Пароль успешно обновлен и сохранен");
+                    defSet.isPasswordSaved = true;
+                    defSet.Save();
+                    Console.WriteLine("Password updated");
+                    value = string.Empty;
                     break;
 
-                case "prepare":
-                    DataBase.Prepare();
-                    Console.WriteLine("База данных подготовлена");
-                    break;
-
-                case "load cl":
-                    cities = GetCityList();
-                    Console.WriteLine("Список городов успешно загружен.");
-                    break;
-
-                case "write cl":
-                    if (DataBase.WriteCityList(cities))
-                        Console.WriteLine("Список городов успешно записан в базу данных");
+                case Command.SetServer:
+                    value = answer.Replace(" ", "");
+                    value = value.Remove(0, Command.SetServer.ToString().Length);
+                    if (value.Length != 0)
+                    {
+                        DataBase.Server = value;
+                        DataBase.SaveSettings();
+                        defSet.isServerSaved = true;
+                        defSet.Save();
+                    }
                     else
-                        Console.WriteLine("Во время записи списка городов произошла ошибка. ");
-                    foreach (var item in cities)
-                        Console.WriteLine(item.Value);
+                        Console.WriteLine("Incorrect value. Try again");
+                    value = string.Empty;
                     break;
 
-                case "read cl":
-                    cities = DataBase.ReadCityList();
-                    Console.WriteLine("Список городов успешно прочитан из базы данных");
+                case Command.SetPort:
+                    value = answer.Replace(" ", "");
+                    value = value.Remove(0, Command.SetPort.ToString().Length);
+                    uint port;
+                    if (uint.TryParse(value, out port))
+                    {
+                        DataBase.Port = port;
+                        DataBase.SaveSettings();
+                        defSet.isPortSaved = true;
+                        defSet.Save();
+                    }
+                    else
+                        Console.WriteLine("Incorrect value. Try again");
+                    value = string.Empty;
                     break;
 
-                case "print cl":
-                    PrintCityList(cities);
+                case Command.Help:
+                    Console.WriteLine("Available commands:\n");
+                    Console.WriteLine("{0,-20} - start parser", Command.Start.ToString().ToLower());
+                    Console.WriteLine("{0,-20} - stop parser", Command.Stop.ToString().ToLower());
+                    Console.WriteLine("{0,-20} - parser status", Command.Status.ToString().ToLower());
+                    Console.WriteLine("{0,-20} - set parser starting period", Command.SetPeriod.ToString().ToLower() + " [minutes]");
+                    Console.WriteLine("{0,-20} - get city name by id", Command.CityId.ToString().ToLower() + " [id]");
+                    Console.WriteLine("{0,-20} - set DB username", Command.SetUser.ToString().ToLower() + " [username]");
+                    Console.WriteLine("{0,-20} - set DB password", Command.SetPassword.ToString().ToLower());
+                    Console.WriteLine("{0,-20} - set DB server", Command.SetServer.ToString().ToLower() + " [server]");
+                    Console.WriteLine("{0,-20} - set DB port", Command.SetPort.ToString().ToLower() + " [port]");
+                    Console.WriteLine("{0,-20} - shows list of available commands", Command.Help.ToString().ToLower());
+                    Console.WriteLine("{0,-20} - stop parser and exit\n", Command.Exit.ToString().ToLower());
                     break;
-                case "getl":
-                    Console.Write("Enter ID:\t");
-                    var testtt = Console.ReadLine();
-                    Console.WriteLine("Result:\n\n");
-                    Console.WriteLine(DataBase.GetCityName(int.Parse(testtt)));
-                    break;
-                case "":
+
+                case Command.Exit:
+                    Program.IsRun = false;
+                    if (_parser.Status == ParserStatus.Working || _parser.Status == ParserStatus.Sleeping)
+                        _parser.Stop();
                     break;
 
                 default:
-                    Console.WriteLine("Неизвестная команда! Введите '?' для просмотра списка доступных команд...");
+                    Console.WriteLine("Unknown command. Print '{0}' to view list of available commands", Command.Help.ToString().ToLower());
                     break;
             }
         }
 
         /// <summary>
+        /// Список доступных команд
+        /// </summary>
+        public enum Command
+        {
+            /// <summary>
+            /// Команда не распознана
+            /// </summary>
+            None = 0,
+            /// <summary>
+            /// Запустить парсер
+            /// </summary>
+            Start = 1,
+            /// <summary>
+            /// Остановить парсер
+            /// </summary>
+            Stop = 2,
+            /// <summary>
+            /// Статус парсера
+            /// </summary>
+            Status = 3,
+            /// <summary>
+            /// Получить название города из базы по его ID
+            /// </summary>
+            CityId = 4,
+            /// <summary>
+            /// Задать имя пользователя БД
+            /// </summary>
+            SetUser = 5,
+            /// <summary>
+            /// Задать пароль пользователя БД
+            /// </summary>
+            SetPassword = 6,
+            /// <summary>
+            /// Задать сервер БД
+            /// </summary>
+            SetServer = 7,
+            /// <summary>
+            /// Задать порт БД
+            /// </summary>
+            SetPort = 8,
+            /// <summary>
+            /// Отобразить список доступных команд
+            /// </summary>
+            Help = 9,
+            /// <summary>
+            /// Завершить работу приложения
+            /// </summary>
+            Exit = 10,
+            /// <summary>
+            /// Задать период запуска парсера в минутах
+            /// </summary>
+            SetPeriod = 11
+        }
+
+        /// <summary>
+        /// Проверяет корректность и возвращает введенную пользователем команду
+        /// </summary>
+        /// <param name="answer">Пользовательский ввод</param>
+        /// <returns></returns>
+        private static Command GetCommand(string answer)
+        {
+            Command result;
+            //Список комманд принимающих значение 
+            List<Command> complexCommands = new List<Command>();
+            complexCommands.Add(Command.CityId);
+            complexCommands.Add(Command.SetUser);
+            complexCommands.Add(Command.SetServer);
+            complexCommands.Add(Command.SetPort);
+            complexCommands.Add(Command.SetPeriod);
+            
+            var commandId = (from cid in (int[])Enum.GetValues(typeof(Command)) where answer.StartsWith(Enum.GetName(typeof(Command), cid).ToLower()) select cid).FirstOrDefault();
+            
+            #region SwitchCommand
+            switch (commandId)
+            {
+                case (int)Command.Start:
+                    result = Command.Start;
+                    break;
+                case (int)Command.Stop:
+                    result = Command.Stop;
+                    break;
+                case (int)Command.Status:
+                    result = Command.Status;
+                    break;
+                case (int)Command.SetPeriod:
+                    result = Command.SetPeriod;
+                    break;
+                case (int)Command.CityId:
+                    result = Command.CityId;
+                    break;
+                case (int)Command.SetUser:
+                    result =  Command.SetUser;
+                    break;
+                case (int)Command.SetPassword:
+                    result = Command.SetPassword;
+                    break;
+                case (int)Command.SetServer:
+                    result = Command.SetServer;
+                    break;
+                case (int)Command.SetPort:
+                    result = Command.SetPort;
+                    break;
+                case (int)Command.Help:
+                    result = Command.Help;
+                    break;
+                case (int)Command.Exit:
+                    result = Command.Exit;
+                    break;
+                default:
+                    result = Command.None;
+                    break;
+            }
+            #endregion
+
+            if(!complexCommands.Contains(result))
+            {
+                //дополнительная проверка правильности ввода команды
+                var anotherID = (from cid in (int[])Enum.GetValues(typeof(Command)) where Enum.GetName(typeof(Command), cid).ToLower() == answer select cid).FirstOrDefault();
+                if (anotherID == 0)
+                    return Command.None;
+            }
+            return result;
+        }
+
+        // TODO: Отредактировать настройки логов парсера
+        /// <summary>
         /// Настраивает логгер для работы
         /// </summary>
-        public static void LoggerConfig()
+        public static void LoggerConfig() 
         {
             LoggingConfiguration config = new LoggingConfiguration();
 
@@ -409,27 +618,26 @@ namespace GisMeteoWeather
         }
 
         /// <summary>
-        /// Парсер начал работу
+        /// Парсер запущен
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         public static void parser_Started(object sender, EventArgs e)
         {
-            _logger.Debug("Parser has been started");
-            Console.WriteLine("Parser has been started");
+            _logger.Debug("Parser status: {0}", _parser.Status);
+            Console.WriteLine("Parser has been started [{0}]", DateTime.Now.ToLongTimeString());
         }
 
         /// <summary>
-        /// Парсер закончил работу
+        /// Парсер остановлен
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         public static void parser_Stopped(object sender, EventArgs e)
         {
             WeatherInfoList.Clear();
-            _logger.Debug("Parser has been stopped");
-            Console.WriteLine("Parser has been stopped");
-
+            _logger.Debug("Parser status: {0}", _parser.Status);
+            Console.WriteLine("Parser has been stopped [{0}]", DateTime.Now.ToLongTimeString());
         }
 
         /// <summary>
@@ -439,13 +647,24 @@ namespace GisMeteoWeather
         /// <param name="e"></param>
         public static void parser_Asleep(object sender, EventArgs e)
         {
+            _logger.Debug("Parser status: {0}", _parser.Status);
+            Console.WriteLine("Parser goes to sleep [{0}]", DateTime.Now.ToLongTimeString());
             foreach (var item in WeatherInfoList)
             {
                 DataBase.WriteWeatherItem(item);
             }
+            _logger.Debug("Database: Added {0} items", WeatherInfoList.Count);
             WeatherInfoList.Clear();
-            _logger.Debug("Parser goes to sleep");
-            Console.WriteLine("Parser goes to sleep");
+        }
+
+        /// <summary>
+        /// Произошла ошибка во время парсинга
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        public static void parser_ErrorOccured(object sender, Exception e)
+        {
+            _logger.Warn("Error was occured while parsing. Message: {0}", e.Message);
         }
         #endregion
     }

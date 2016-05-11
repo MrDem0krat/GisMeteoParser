@@ -8,7 +8,7 @@
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>GisMeteoWeather</RootNamespace>
-    <AssemblyName>GisMeteoWeather</AssemblyName>
+    <AssemblyName>GisMeteoParser</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -38,7 +38,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\GisMeteoWeather.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\GisMeteoParser.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -97,7 +97,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="ClassDiagram1.cd" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -114,14 +113,17 @@
     <ProjectReference Include="..\DataBaseWeather\DataBaseLib.csproj">
       <Project>{075d17f3-153a-480d-99da-3b06d1d03709}</Project>
       <Name>DataBaseLib</Name>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </ProjectReference>
     <ProjectReference Include="..\Parser\ParserLib.csproj">
       <Project>{d757ea5b-012e-4e4c-bc0c-0b31573f8452}</Project>
       <Name>ParserLib</Name>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </ProjectReference>
     <ProjectReference Include="..\Weather\Weather.csproj">
       <Project>{bb380125-9dc7-4fb4-8a47-e084d699d285}</Project>
       <Name>Weather</Name>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

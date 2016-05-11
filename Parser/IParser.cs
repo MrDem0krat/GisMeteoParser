@@ -34,11 +34,10 @@ namespace ParserLib
         /// </summary>
         /// <param name="prms"></param>
         /// <returns></returns>
-        Task StartAsync(params string[] prms);
+        void Start(params string[] prms);
 
         /// <summary>
-        /// Принудительная остановка парсера (например, при завершении приложения). В этом методе нужно запускать Dispose(), 
-        /// чтобы очистить данные, закрыть соединения и т.п., чтобы не захламлять и не валилось исключений.
+        /// Принудительная остановка парсера 
         /// </summary>
         void Stop();
     }
