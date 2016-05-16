@@ -1,13 +1,10 @@
 ﻿using DataBaseWeather;
 using HtmlAgilityPack;
 using NLog;
-using NLog.Config;
-using NLog.Targets;
 using ParserLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using Weather;
 
@@ -226,7 +223,6 @@ namespace GisMeteoWeather
         /// </summary>
         public static void Setup()
         {
-            LoggerConfig();
             _logger.Info("Application started");
             bool isSettingDone = false;
             string _answer = string.Empty;
@@ -569,32 +565,6 @@ namespace GisMeteoWeather
                     return Command.None;
             }
             return result;
-        }
-
-        // TODO: Отредактировать настройки логов парсера
-        /// <summary>
-        /// Настраивает логгер для работы
-        /// </summary>
-        public static void LoggerConfig() 
-        {
-            LoggingConfiguration config = new LoggingConfiguration();
-
-            FileTarget fileTarget = new FileTarget();
-            config.AddTarget("file", fileTarget);
-
-            fileTarget.DeleteOldFileOnStartup = true; // Удалатья страый файл при запуске
-            fileTarget.KeepFileOpen = false; //Не держать файл открытым
-            fileTarget.ConcurrentWrites = true; 
-            fileTarget.Encoding = Encoding.GetEncoding(1251); // Кодировка файла логов
-            fileTarget.ArchiveEvery = FileArchivePeriod.Day; // Период архивирования старых логов (нет смысла, если старый удаляется при запуске)
-            fileTarget.Layout = NLog.Layouts.Layout.FromString("${uppercase:${level}} | ${longdate} :\t${message}"); // Структура сообщения
-            fileTarget.FileName = NLog.Layouts.Layout.FromString("${basedir}/logs/${shortdate}.log"); //Структура названия файлов
-            fileTarget.ArchiveFileName = NLog.Layouts.Layout.FromString("${basedir}/logs/archives/{shortdate}.rar"); // Структура названия архивов
-
-            LoggingRule ruleFile = new LoggingRule("*", LogLevel.Trace, fileTarget); // Минимальный уровень логгирования - Trace
-            config.LoggingRules.Add(ruleFile);
-
-            LogManager.Configuration = config;
         }
 
         #region EventHandlers
