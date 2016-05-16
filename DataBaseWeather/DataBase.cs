@@ -743,7 +743,8 @@ namespace DataBaseWeather
             MySqlCommand command = new MySqlCommand();
             WeatherItem weather = new WeatherItem();
             List<WeatherItem> readerResult = new List<WeatherItem>();
-            string cmdString = string.Format("SELECT * FROM {0}.{1} WHERE City_ID={2}", Properties.Settings.Default.DBName, Properties.Settings.Default.TableWeatherName, cityID);
+            string cmdString = string.Format("SELECT * FROM {0}.{1} WHERE City_ID={2} AND Date BETWEEN \"{3:yyyy.MM.dd}\" AND \"{3:yyyy.MM.dd}\"", 
+                Properties.Settings.Default.DBName, Properties.Settings.Default.TableWeatherName, cityID, date);
             _logger.Trace("Trying to read actual weather info for the city '{0}' on {1} ({2})", cityID, date, dayPart);
 
             using (var connection = Connect(Properties.Settings.Default.DBName))
@@ -776,8 +777,8 @@ namespace DataBaseWeather
                         }
                     reader.Close();
                     //Выбираем по максимальному RefreshTime самый последний полученный прогноз
-                    weather = (from w in readerResult where ((w.PartOfDay == dayPart) && (w.Date.Date == date.Date)) select w).Where(x =>
-                                    x.RefreshTime == (from we in readerResult select we).Max(m => m.RefreshTime)).First();
+                    var wAllPart = from w in readerResult where w.PartOfDay == dayPart select w;
+                    weather = (from w in wAllPart where w.RefreshTime == wAllPart.Max(x => x.RefreshTime) select w).First();
                     readerResult.Clear();
                     _logger.Debug("ReadWeatherItem({0}, {1}, {2}) - success", cityID, date, dayPart);
                 }
@@ -789,45 +790,6 @@ namespace DataBaseWeather
                 Disconnect(connection);
                 return weather;
             }
-        }
-
-        //TODO: написать функции чтения погоды за период времени {вспомнить, нахер они мне были нужны}
-        /// <summary>
-        /// Возвращает прочитанный из базы список прогнозов для указанного города за указанный переиод времени
-        /// </summary>
-        /// <param name="cityID">Идентификатор города</param>
-        /// <param name="firstDate">Начальная дата периода</param>
-        /// <param name="lastDate">Конечная дата периода</param>
-        /// <returns></returns>
-        public static List<IWeatherItem> ReadWeatherPeriod(int cityID, DateTime firstDate, DateTime lastDate)
-        {
-            List<IWeatherItem> result = new List<IWeatherItem>();
-            IWeatherItem item = new WeatherItem();
-            int days;
-            if (lastDate == firstDate)
-                days = (firstDate - DateTime.Now).Days;
-            else
-              days = (firstDate - firstDate).Days;
-            for(var i = 0; i <days;i++)
-            {
-                for(var j = 0; j<4;j++)
-                {
-                    item = ReadWeatherItem(cityID, firstDate.AddDays(i), (DayPart)j);
-                    if (item != new WeatherItem())
-                    result.Add(item);
-                }
-            }
-            return result;
-        }
-        /// <summary>
-        /// Возвращает прочитанный из базы список прогнозов для указанного города в указанный день на все части суток
-        /// </summary>
-        /// <param name="cityID">Идентификатор города</param>
-        /// <param name="oneDay">Дата прогноза</param>
-        /// <returns></returns>
-        public static List<IWeatherItem> ReadWeatherPeriod(int cityID, DateTime oneDay)
-        {
-            return ReadWeatherPeriod(cityID, oneDay, oneDay);
         }
 
         /// <summary>
