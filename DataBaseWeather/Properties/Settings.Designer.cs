@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace DataBaseLib.Properties {
+namespace DataBaseWeather.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]

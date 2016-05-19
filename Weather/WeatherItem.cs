@@ -1,14 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Weather
 {
     public class WeatherItem : IWeatherItem, IComparable<IWeatherItem>
     {
-        /// <summary>
-        /// Представляет пустой прогноз. Это поле доступно только для чтения
-        /// </summary>
-        public static readonly WeatherItem Empty = new WeatherItem();
-
         #region Свойства
         /// <summary>
         /// ID города, для которого предоставлен прогноз
@@ -70,7 +69,6 @@ namespace Weather
         /// </summary>
         public DateTime RefreshTime { get; set; }
         #endregion
-        
 
         #region Конструкоры
         public WeatherItem() { }

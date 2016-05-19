@@ -112,11 +112,11 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Button x:Name="btnSettings" Content="Настройки" Grid.Column="12" Click="button_settings_Click"/>
-        <Button x:Name="btnRefresh" Content="Обновить" Grid.Column="10" Click="button_refresh_Click" ToolTip="Обновить данные"/>
-        <Button x:Name="btnLogs" Content="Логи" Grid.Column="8" Click="ShowLog_Click" BorderBrush="{x:Null}" ToolTip="Просмотреть логи приложения"/>
+        <Button x:Name="btnStart" Content="Обновить" Grid.Column="10" Click="button_load_Click"/>
+        <Button x:Name="btnTest" Content="Test" Grid.Column="8" Click="test_button_Click" BorderBrush="{x:Null}"/>
         <StackPanel Grid.Column="8" Grid.ColumnSpan="5" Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
             <Label x:Name="lblLastRefresh" Content="Погода актуальна на 12:37 21.02.2014" />
-            <Image x:Name="imgStatusRefresh" Source="pack://siteoforigin:,,,/Resources/graphics/status/Success.png" Height="30" Width="30" Stretch="UniformToFill"/>
+            <Image x:Name="imgStatusRefresh" Source="pack://siteoforigin:,,,/Resources/graphics/Checked.png" Height="30" Width="30" Stretch="UniformToFill"/>
         </StackPanel>
         <Grid x:Name="GridWeatherDay" Grid.Row="2" Grid.ColumnSpan="14"  >
             <Grid.ColumnDefinitions>

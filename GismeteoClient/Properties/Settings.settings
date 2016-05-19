@@ -21,7 +21,7 @@
       <Value Profile="(Default)">4258</Value>
     </Setting>
     <Setting Name="USCityName" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Брянск</Value>
+      <Value Profile="(Default)" />
     </Setting>
     <Setting Name="USRefreshPeriod" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">0</Value>
