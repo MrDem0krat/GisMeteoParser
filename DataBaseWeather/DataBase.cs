@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Weather;
 
-namespace DataBaseWeather
+namespace DataBaseLib
 {
     /// <summary>
     /// Обслуживающий класс для работы с базой данных
@@ -156,12 +156,12 @@ namespace DataBaseWeather
             {
                 if (connection.Database != "information_schema")
                 {
-                    _logger.Trace("Trying to connect to '{0}'.'{1}'", Server, connection.Database);
-
+                    _logger.Trace("Trying to connect to '{0}.{1}'", Server, connection.Database);
                     if (CheckDataBase(connection.Database))
                     {
-                        connection.Open();
-                        _logger.Debug("'{0}'.'{1}' - connected", Server, connection.Database);
+                        if(connection.State != ConnectionState.Open)
+                            connection.Open();
+                        _logger.Trace("'{0}'.'{1}' - connected", Server, connection.Database);
                     }
                     else
                         throw new Exception("Database not found");
@@ -170,7 +170,7 @@ namespace DataBaseWeather
             }
             catch (Exception ex)
             {
-                _logger.Warn("Error occurred while connecting '{1}'.'{0}'. Message: {2}", connection.Database, Server, ex.Message);
+                _logger.Warn("Error occurred while connecting '{1}.{0}'. Message: {2}", connection.Database, Server, ex.Message);
                 if (connection.State == ConnectionState.Open || connection.State == ConnectionState.Connecting)
                     connection.Close();
                 connection = new MySqlConnection();
@@ -199,7 +199,7 @@ namespace DataBaseWeather
             if(connection.State != ConnectionState.Closed)
             {
                 connection.Close();
-                _logger.Debug("Disconnect '{0}'.'{1}' - success", Server, connection.Database);
+                _logger.Trace("Disconnected: '{0}.{1}'", Server, connection.Database);
             }
         }
         public static async Task DisconnectAsync(MySqlConnection connection)
@@ -210,18 +210,6 @@ namespace DataBaseWeather
             });
         }
 
-        /// <summary>
-        /// Проверяет наличие базы данных на сервере
-        /// </summary>
-        /// <param name="database">Имя базы данных для проверки</param>
-        /// <returns></returns>
-        public static bool CheckDataBase(string database)
-        {
-            MySqlConnection connection = Connect();
-
-            return CheckDataBase(database, connection);
-
-        }
         /// <summary>
         /// Проверяет наличие базы данных на сервере
         /// </summary>
@@ -236,7 +224,7 @@ namespace DataBaseWeather
             bool result = false;
             List<string> databases = new List<string>();
 
-            _logger.Trace("Checking database '{0}'.'{1}'", Server, database);
+            _logger.Trace("Checking database '{0}.{1}'", Server, database);
             using (connection)
             {
                 try
@@ -253,22 +241,31 @@ namespace DataBaseWeather
                         reader.Close();
                         if (databases.Contains(database))
                         {
-                            _logger.Debug("Check database '{0}'.'{1}' - success", Server, database);
+                            _logger.Trace("Check database '{0}.{1}' - success", Server, database);
                             result = true;
                         }
                         else
-                            _logger.Debug("Check database '{0}'.'{1}' - not found", Server, database);
+                            _logger.Trace("Check database '{0}.{1}' - not found", Server, database);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error("Error occurred while checking database:\tMethod: {0}; Message: {1}", ex.TargetSite, ex.Message);
+                    _logger.Error("Error occurred while checking database. Message: {0}", ex.Message);
                     result = false;
                 }
-                Disconnect(connection); // для записи в логе
+                Disconnect(connection);
                 return result;
             }
-
+        }
+        /// <summary>
+        /// Проверяет наличие базы данных на сервере
+        /// </summary>
+        /// <param name="database">Имя базы данных для проверки</param>
+        /// <returns></returns>
+        public static bool CheckDataBase(string database)
+        {
+            MySqlConnection connection = Connect();
+            return CheckDataBase(database, connection);
         }
         /// <summary>
         /// Проверяет наличие базы данных на сервере в асинхронной манере
@@ -278,7 +275,6 @@ namespace DataBaseWeather
         public static async Task<bool> CheckDataBaseAsync(string database)
         {
             MySqlConnection connect = await ConnectAsync();
-
             return await CheckDataBaseAsync(database);
         }
         /// <summary>
@@ -293,18 +289,8 @@ namespace DataBaseWeather
             {
                 return CheckDataBase(database, connection);
             });
-        } 
-
-        /// <summary>
-        /// Проверяет наличие таблицы в базе данных
-        /// </summary>
-        /// <param name="table">Имя искомой таблицы</param>
-        /// <param name="database">Имя базы данных, в которой необходимо произвести поиск</param>
-        /// <returns></returns>
-        public static bool CheckTable(TableType table, string database)
-        {
-            return CheckTable(table, Connect(database));
         }
+
         /// <summary>
         /// Проверяет наличие таблицы в базе данных
         /// </summary>
@@ -330,13 +316,11 @@ namespace DataBaseWeather
                         break;
                 }
 
-                _logger.Trace("Checking table '{0}'.'{1}'", connection.Database, _tableName);
-
+                _logger.Trace("Checking table '{0}.{1}'", connection.Database, _tableName);
                 try
                 {
                     if (connection.State != ConnectionState.Open)
                         connection.Open();
-
                     var reader = command.ExecuteReader();
                     if (reader.HasRows)
                         while (reader.Read())
@@ -344,21 +328,31 @@ namespace DataBaseWeather
                     reader.Close();
                     if (tables.Contains(_tableName))
                     {
-                        _logger.Debug("Check table '{0}'.'{1}' - success", connection.Database, _tableName);
+                        _logger.Trace("Check table '{0}.{1}' - success", connection.Database, _tableName);
                         result = true;
                     }
                     else
                     {
-                        _logger.Debug("Check table '{0}'.'{1}' - not found", connection.Database, _tableName);
+                        _logger.Trace("Check table '{0}.{1}' - not found", connection.Database, _tableName);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error("Error occurred while checking table '{0}' in {1}: Method: {2}; Message: {3}", _tableName, ex.TargetSite, ex.Message);
+                    _logger.Error("Error occurred while checking table. Message: {0}", ex.Message);
                 }
-                Disconnect(connection); //для записи в логе
+                Disconnect(connection);
                 return result;
             }
+        }
+        /// <summary>
+        /// Проверяет наличие таблицы в базе данных
+        /// </summary>
+        /// <param name="table">Имя искомой таблицы</param>
+        /// <param name="database">Имя базы данных, в которой необходимо произвести поиск</param>
+        /// <returns></returns>
+        public static bool CheckTable(TableType table, string database)
+        {
+            return CheckTable(table, Connect(database));
         }
         /// <summary>
         /// Проверяет наличие таблицы в базе данных в асинхронной манере
@@ -390,26 +384,30 @@ namespace DataBaseWeather
             using (MySqlConnection connection = Connect())
             {
                 database = database.ToLower();
-                MySqlCommand command = new MySqlCommand(string.Format("CREATE DATABASE IF NOT EXISTS {0} CHARACTER SET cp1251 COLLATE cp1251_general_ci", database), connection);
-                _logger.Trace("Trying to create new database '{0}'.'{1}'", Server, database);
+                var comText = string.Format("CREATE DATABASE IF NOT EXISTS {0} CHARACTER SET cp1251 COLLATE cp1251_general_ci", database);
+                MySqlCommand command = new MySqlCommand();
+
+                _logger.Trace("Trying to create new database '{0}.{1}'", Server, database);
                 try
                 {
-                    if (connection.State != ConnectionState.Open)
-                        connection.Open();
                     if (CheckDataBase(database, connection))
-                        _logger.Debug("Create DataBase '{1}'.'{0}' -  already exists", Server, database);
+                        _logger.Trace("Create DataBase '{1}.{0}' -  already exists", Server, database);
                     else
                     {
+                        if (connection.State != ConnectionState.Open)
+                            connection.Open();
+                        command.Connection = connection;
+                        command.CommandText = comText;
                         command.ExecuteNonQuery();
                         if (CheckDataBase(database, connection))
-                            _logger.Debug("Create DataBase '{1}'.'{0}' - success", Server, database);
+                            _logger.Debug("Created DataBase: '{1}.{0}'", Server, database);
                         else
                             throw new Exception("'Create' command was sent, but database wasn't created");
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error("Error occurred while creating database '{0}'.'{1}'. Message: {2}", Server, database, ex.Message);
+                    _logger.Error("Error occurred while creating database '{0}.{1}'. Message: {2}", Server, database, ex.Message);
                 }
                 Disconnect(connection);
             }
@@ -427,30 +425,17 @@ namespace DataBaseWeather
         /// <summary>
         /// Создает новую таблицу в базе данных
         /// </summary>
-        /// <param name="database">Имя базы данных, в которой требуется создать таблицу</param>
-        /// <param name="table">Тип создаваемой таблицы</param>
-        public static void CreateTable(TableType table, string database)
-        {
-            if (CheckDataBase(database))
-                CreateTable(table, Connect(database));
-        }
-        /// <summary>
-        /// Создает новую таблицу в базе данных
-        /// </summary>
         /// <param name="connection">Соединение с базой данных, в которой требуется создать таблицу</param>
         /// <param name="table">Тип создаваемой таблицы</param>
         public static void CreateTable(TableType table, MySqlConnection connection)
         {
+            MySqlCommand command = new MySqlCommand();
+            string _tableName = string.Empty;
+
             using (connection)
             {
-                MySqlCommand command = new MySqlCommand();
-                bool isAlreadyExists = false;
-                string _tableName = string.Empty;
-
                 try
                 {
-                    if (connection.State != ConnectionState.Open)
-                        connection.Open();
                     switch (table)
                     {
                         case TableType.Weather:
@@ -476,7 +461,6 @@ namespace DataBaseWeather
                                 CHARACTER SET cp1251
                                 COLLATE cp1251_general_ci;",
                                         connection.Database, _tableName), connection);
-                            isAlreadyExists = CheckTable(TableType.Weather, connection);
                             break;
                         case TableType.City:
                             _tableName = Properties.Settings.Default.TableCityName.ToLower();
@@ -490,28 +474,39 @@ namespace DataBaseWeather
                                 CHARACTER SET cp1251
                                 COLLATE cp1251_general_ci;",
                                         connection.Database, _tableName), connection);
-                            isAlreadyExists = CheckTable(TableType.City, connection);
                             break;
                     }
-                    _logger.Trace("Trying to create new table '{0}'.'{1}'", connection.Database, _tableName);
 
-                    if (!isAlreadyExists)
+                    _logger.Trace("Trying to create new table '{0}.{1}'", connection.Database, _tableName);
+                    if (!CheckTable(table, connection))
                     {
+                        if (connection.State != ConnectionState.Open)
+                            connection.Open();
                         command.ExecuteNonQuery();
                         if (CheckTable(table, connection))
-                            _logger.Debug("Create Table '{0}'.'{1}' - success", connection.Database, _tableName);
+                            _logger.Debug("Created Table: '{0}.{1}'", connection.Database, _tableName);
                         else
                             throw new Exception("'Create' command was sent, but table wasn't created");
                     }
                     else
-                        _logger.Debug("Create Table '{0}'.'{1}' - already exists", connection.Database, _tableName);
+                        _logger.Trace("Create Table '{0}.{1}' - already exists", connection.Database, _tableName);
                 }
                 catch (Exception ex)
                 {
-                    _logger.Warn("Error occurred while creating table '{0}'.'{1}'. Message: {3}", connection.Database, _tableName, ex.Message);
+                    _logger.Warn("Error occurred while creating table. Message: {3}", connection.Database, _tableName, ex.Message);
                 }
                 Disconnect(connection);
             }
+        }
+        /// <summary>
+        /// Создает новую таблицу в базе данных
+        /// </summary>
+        /// <param name="database">Имя базы данных, в которой требуется создать таблицу</param>
+        /// <param name="table">Тип создаваемой таблицы</param>
+        public static void CreateTable(TableType table, string database)
+        {
+            if (CheckDataBase(database))
+                CreateTable(table, Connect(database));
         }
         /// <summary>
         /// Создает новую таблицу в базе данных в асинхронной манере
@@ -542,12 +537,8 @@ namespace DataBaseWeather
         public static void Prepare()
         {
             _logger.Trace("Preparing database for working");
-            using (var connection = Connect())
-            {
-                if (!CheckDataBase(Properties.Settings.Default.DBName, connection))
-                    CreateDataBase(Properties.Settings.Default.DBName);
-                Disconnect(connection);
-            }
+            CreateDataBase(Properties.Settings.Default.DBName);
+
             using (var connection = Connect(Properties.Settings.Default.DBName))
             {
                 CreateTable(TableType.Weather, connection);
@@ -571,12 +562,14 @@ namespace DataBaseWeather
         /// <summary>
         /// Записывает сведения о погоде в базу данных
         /// </summary>
-        /// <param name="weather">Прогноз, который требуется записать</param>
-        public static bool WriteWeatherItem(IWeatherItem weather)
+        /// <param name="weatherList">Массив прогнозов, которй требуется записать в базу</param>
+        /// <returns></returns>
+        public static bool WriteWeather(IEnumerable<IWeatherItem> weatherList)
         {
             MySqlCommand command = new MySqlCommand();
             bool result = false;
-            command.CommandText = string.Format(@"INSERT INTO {0} (ID, City_ID, Date, DayPart, Temperature, TemperatureFeel, `Condition`, TypeImage, Humidity, Pressure, WindDirection, WindSpeed, RefreshTime)
+            WeatherItem errorOn = new WeatherItem();
+            var commandText = string.Format(@"INSERT INTO {0} (ID, City_ID, Date, DayPart, Temperature, TemperatureFeel, `Condition`, TypeImage, Humidity, Pressure, WindDirection, WindSpeed, RefreshTime)
                                                                      VALUES(@ID,
                                                                             @City_ID,
                                                                             @Date,
@@ -591,39 +584,55 @@ namespace DataBaseWeather
                                                                             @WindSpeed,
                                                                             @RefreshTime)
                                                             ", Properties.Settings.Default.TableWeatherName.ToLower());
-            command.Parameters.AddWithValue("@ID", null);
-            command.Parameters.AddWithValue("@City_ID", weather.CityID);
-            command.Parameters.AddWithValue("@Date", weather.Date.Date);
-            command.Parameters.AddWithValue("@DayPart", weather.PartOfDay.ToString());
-            command.Parameters.AddWithValue("@Temperature", weather.Temperature);
-            command.Parameters.AddWithValue("@TemperatureFeel", weather.TemperatureFeel);
-            command.Parameters.AddWithValue("@Condition", weather.Condition);
-            command.Parameters.AddWithValue("@TypeImage", weather.TypeImage);
-            command.Parameters.AddWithValue("@Humidity", weather.Humidity);
-            command.Parameters.AddWithValue("@Pressure", weather.Pressure);
-            command.Parameters.AddWithValue("@WindDirection", weather.WindDirection);
-            command.Parameters.AddWithValue("@WindSpeed", weather.WindSpeed);
-            command.Parameters.AddWithValue("@RefreshTime", weather.RefreshTime);
-
             using (var connection = Connect(Properties.Settings.Default.DBName))
             {
-                _logger.Trace("Trying to write weather item '{0}':'{1} ({2})'", weather.CityID, weather.Date.ToShortDateString(), weather.PartOfDay);
                 try
                 {
                     if (connection.State != ConnectionState.Open)
                         connection.Open();
-                    command.Connection = connection;
-                    command.ExecuteNonQuery();
-                    _logger.Debug("WriteWeatherItem '{0}':'{1} ({2})' - success", weather.CityID, weather.Date.ToShortDateString(), weather.PartOfDay);
+                    foreach (var item in weatherList)
+                    {
+                        _logger.Trace("Trying to write weather item '{0}:{1}({2})'", item.CityID, item.Date.Date, item.PartOfDay);
+                        command = new MySqlCommand();
+                        command.Connection = connection;
+                        command.CommandText = commandText;
+                        errorOn = item as WeatherItem;
+
+                        command.Parameters.AddWithValue("@ID", null);
+                        command.Parameters.AddWithValue("@City_ID", item.CityID);
+                        command.Parameters.AddWithValue("@Date", item.Date.Date);
+                        command.Parameters.AddWithValue("@DayPart", item.PartOfDay.ToString());
+                        command.Parameters.AddWithValue("@Temperature", item.Temperature);
+                        command.Parameters.AddWithValue("@TemperatureFeel", item.TemperatureFeel);
+                        command.Parameters.AddWithValue("@Condition", item.Condition);
+                        command.Parameters.AddWithValue("@TypeImage", item.TypeImage);
+                        command.Parameters.AddWithValue("@Humidity", item.Humidity);
+                        command.Parameters.AddWithValue("@Pressure", item.Pressure);
+                        command.Parameters.AddWithValue("@WindDirection", item.WindDirection);
+                        command.Parameters.AddWithValue("@WindSpeed", item.WindSpeed);
+                        command.Parameters.AddWithValue("@RefreshTime", item.RefreshTime);
+
+                        command.ExecuteNonQuery();
+                    }
+                    _logger.Debug("WriteWeather() = success");
                     result = true;
                 }
                 catch (Exception ex)
                 {
-                    _logger.Warn("Error occurred while writing '{0}: {1} ({2})'. Message: {3}", weather.CityID, weather.Date.ToShortDateString(), weather.PartOfDay, ex.Message);
+                    _logger.Warn("Error occurred while writing '{0}:{1}({2})'. Message: {3}", errorOn.CityID, errorOn.Date.Date, errorOn.PartOfDay, ex.Message);
                 }
                 Disconnect(connection);
-                return result; 
+                return result;
             }
+        }
+        /// <summary>
+        /// Записывает сведения о погоде в базу данных
+        /// </summary>
+        /// <param name="weather">Прогноз, который требуется записать</param>
+        public static bool WriteWeather(WeatherItem weather)
+        {
+            List<WeatherItem> items = new List<WeatherItem>() { weather };
+            return WriteWeather(items);
         }
 
         /// <summary>
@@ -656,7 +665,7 @@ namespace DataBaseWeather
 
                         command.ExecuteNonQuery();
                     }
-                    _logger.Debug("WriteCityList() - success");
+                    _logger.Debug("WriteCityList() = success");
                     result = true;
                 }
                 catch (Exception ex)
@@ -680,10 +689,10 @@ namespace DataBaseWeather
             using (var connection = Connect(Properties.Settings.Default.DBName))
             {
                 MySqlCommand command = new MySqlCommand("SELECT * FROM " + Properties.Settings.Default.TableCityName, connection);
-                if (connection.State != ConnectionState.Open)
-                    connection.Open();
                 try
                 {
+                    if (connection.State != ConnectionState.Open)
+                        connection.Open();
                     var reader = command.ExecuteReader();
                     if (reader.HasRows)
                     {
@@ -692,7 +701,7 @@ namespace DataBaseWeather
                             result.Add(reader.GetInt32(0), reader.GetString(1));
                         }
                         reader.Close();
-                        _logger.Debug("ReadCirylist() - success");
+                        _logger.Trace("ReadCirylist() - success");
                     }
                     else
                         throw new Exception("No data was found while reading list of cities from database");
@@ -721,11 +730,11 @@ namespace DataBaseWeather
             if (cityName.ToArray().Count() > 0)
             {
                 isFound = true;
-                _logger.Debug("GetCityName(): '{0}' is '{1}'", id, cityName.FirstOrDefault());
+                _logger.Trace("GetCityName(): '{0}' is '{1}'", id, cityName.FirstOrDefault());
             }
             else
             {
-                _logger.Debug("GetCityName(): '{0}' is not founded");
+                _logger.Trace("GetCityName(): '{0}' is not founded");
             }
 
             return isFound ? cityName.First() : "Not Found";
@@ -745,16 +754,16 @@ namespace DataBaseWeather
             List<WeatherItem> readerResult = new List<WeatherItem>();
             string cmdString = string.Format("SELECT * FROM {0}.{1} WHERE City_ID={2} AND Date BETWEEN \"{3:yyyy.MM.dd}\" AND \"{3:yyyy.MM.dd}\"", 
                 Properties.Settings.Default.DBName, Properties.Settings.Default.TableWeatherName, cityID, date);
-            _logger.Trace("Trying to read actual weather info for the city '{0}' on {1} ({2})", cityID, date, dayPart);
+            _logger.Trace("Trying to read weather '{0}:{1}({2})'", cityID, date.Date, dayPart);
 
             using (var connection = Connect(Properties.Settings.Default.DBName))
             {
                 try
                 {
-                    if (connection.State != ConnectionState.Open)
-                        connection.Open();
                     command.Connection = connection;
                     command.CommandText = cmdString;
+                    if (connection.State != ConnectionState.Open)
+                        connection.Open();
                     var reader = command.ExecuteReader();
                     if (reader.HasRows)
                         while (reader.Read())
@@ -780,11 +789,11 @@ namespace DataBaseWeather
                     var wAllPart = from w in readerResult where w.PartOfDay == dayPart select w;
                     weather = (from w in wAllPart where w.RefreshTime == wAllPart.Max(x => x.RefreshTime) select w).First();
                     readerResult.Clear();
-                    _logger.Debug("ReadWeatherItem({0}, {1}, {2}) - success", cityID, date, dayPart);
+                    _logger.Trace("ReadWeatherItem({0}, {1}, {2}) - success", cityID, date, dayPart);
                 }
                 catch (Exception ex)
                 {
-                    _logger.Warn("Error was occurred while reading weather item '{0}'.'{1}({2})'. Message: {3}", cityID, date, dayPart, ex.Message);
+                    _logger.Warn("Error was occurred while reading weather item '{0}.{1}({2})'. Message: {3}", cityID, date, dayPart, ex.Message);
                     weather = new WeatherItem();
                 }
                 Disconnect(connection);

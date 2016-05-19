@@ -1,0 +1,55 @@
+﻿<Window x:Name="LogWindow" x:Class="GismeteoClient.LogWnd"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GismeteoClient"
+        mc:Ignorable="d"
+        Title="Отладочные сообщения приложения" Style="{DynamicResource wndStyle}">
+    <Window.Resources>
+        <Style x:Key="basicStyle" TargetType="{x:Type Control}">
+            <Setter Property="FontFamily" Value="/GismeteoWeather;component/content/#Segoe WP Light"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        <Style x:Key="wndStyle" TargetType="Window" BasedOn="{StaticResource basicStyle}">
+            <Setter Property="Height" Value="480"/>
+            <Setter Property="Width" Value="640"/>
+            <Setter Property="Icon" Value="pack://siteoforigin:,,,/Resources/graphics/LogWndIcon.ico"/>
+        </Style>
+        <Style TargetType="Button" BasedOn="{StaticResource basicStyle}"/>
+        <Style x:Key="dgStyle" TargetType="DataGrid" BasedOn="{StaticResource basicStyle}">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="ColumnHeaderHeight" Value="24"/>
+            <Setter Property="HorizontalScrollBarVisibility" Value="Disabled"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="RowStyle" Value="{DynamicResource dgRowStyle}"/>
+        </Style>
+        <Style x:Key="dgRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource basicStyle}">
+            <Setter Property="MinHeight" Value="22"/>
+        </Style>
+
+    </Window.Resources>
+    <Grid Background="#7F237CFF">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="10"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="10"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="5"/>
+            <RowDefinition Height="28"/>
+            <RowDefinition Height="10"/>
+        </Grid.RowDefinitions>
+        <Button x:Name="bClose" IsDefault="True" Width="140" Grid.Column="1" Grid.Row="3" Content="Закрыть лог" Click="bClose_Click"/>
+        <DataGrid x:Name="dgLogViewer" Grid.Column="1" Grid.Row="1" Style="{DynamicResource dgStyle}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Binding="{Binding Path=Time}" Header="Время" IsReadOnly="True" MinWidth="130"/>
+                <DataGridTextColumn Binding="{Binding Path=Level}" Header="Уровень" IsReadOnly="True" MinWidth="70"/>
+                <DataGridTextColumn Binding="{Binding Path=Message}" CanUserSort="False" CanUserResize="False" Header="Сообщение" IsReadOnly="True" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</Window>

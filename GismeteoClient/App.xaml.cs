@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
+using NLog;
 
 namespace GismeteoClient
 {
@@ -15,8 +10,8 @@ namespace GismeteoClient
     {
         private void Application_Startup(object sender, StartupEventArgs e)
         {
+            //В случае крэша включить песню The Pixies - Where is my Mind﻿
             GismeteoClient.MainWindow._splashScreen.Show(false, true);
-            
         }
     }
 }
