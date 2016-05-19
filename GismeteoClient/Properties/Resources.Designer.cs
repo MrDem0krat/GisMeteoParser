@@ -97,5 +97,14 @@ namespace GismeteoClient.Properties {
                 return ((System.Drawing.Icon)(obj));
             }
         }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Resources/graphics/gm_icons/.
+        /// </summary>
+        public static string weatherIconsPath {
+            get {
+                return ResourceManager.GetString("weatherIconsPath", resourceCulture);
+            }
+        }
     }
 }

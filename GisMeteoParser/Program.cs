@@ -12,12 +12,12 @@ namespace GisMeteoWeather
             IsRun = true;
             string answer = string.Empty;
 
-            Console.WriteLine(">>> Gismeteo weather parser <<<\n");
+            Console.WriteLine(">>> Gismeteo weather parser <<<");
 
             Worker.Setup();
 
-            Console.WriteLine("Enter '{0}' to view available commands list...\n", Worker.Command.Help.ToString().ToLower());
-
+            Console.WriteLine("\nAvailable commands:\n");
+            Worker.ShowCommand();
             while (IsRun)
             {
                 answer = Console.ReadLine();
@@ -25,6 +25,5 @@ namespace GisMeteoWeather
             }
             _logger.Debug("Application closed");
         }
-
     }
 }

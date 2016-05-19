@@ -142,10 +142,11 @@ namespace WeatherServiceHost
             switch (command)
             {
                 case Command.Start:
+                    
                     if (host.State != CommunicationState.Opened)
                     {
                         host.Open();
-                        _logger.Debug("host.Open()");
+                        _logger.Trace("host.Open() = success");
                         Console.WriteLine("Host started");
                     }
                     else
@@ -159,7 +160,7 @@ namespace WeatherServiceHost
                         if (Console.ReadLine().ToLower() == "y")
                         {
                             WService.SaveSettings();
-                            _logger.Debug("SaveSettings()");
+                            _logger.Info("Settings saved");
                         }
                     }
                     isRun = false;
