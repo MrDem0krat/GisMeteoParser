@@ -1,4 +1,4 @@
-﻿using DataBaseLib;
+﻿using DataBaseWeather;
 using HtmlAgilityPack;
 using NLog;
 using ParserLib;
@@ -21,7 +21,7 @@ namespace GisMeteoWeather
         private static Parser _parser = new Parser();
 
         private static Properties.Settings defSet = Properties.Settings.Default;
-
+        
         /// <summary>
         /// Введены ли сведения для подключения к базе данных
         /// </summary>
@@ -37,7 +37,7 @@ namespace GisMeteoWeather
         /// Список полученных прогнозов
         /// </summary>
         public static List<WeatherItem> WeatherInfoList { get; private set; }
-
+        
         /// <summary>
         /// Функция выборки данных прогноза на заданный день в заданное время суток
         /// </summary>
@@ -45,7 +45,7 @@ namespace GisMeteoWeather
         /// <param name="dayToParse">Требуемый день</param>
         /// <param name="partOfDay">Требуемое время суток</param>
         /// <returns>Возвращает объект, реализующий интерфейс IWeatherInfo</returns>
-        public static IWeatherItem ParseWeatherData(HtmlDocument source, DayToParse dayToParse = DayToParse.Today, DayPart partOfDay = DayPart.Day)
+        public static IWeatherItem ParseWeatherData(HtmlDocument source, DayToParse dayToParse = DayToParse.Today, DayPart partOfDay = DayPart.Day) 
         {
             WeatherItem _weather = new WeatherItem();
             bool HasError = false;
@@ -98,10 +98,10 @@ namespace GisMeteoWeather
                     {
                         TemperatureNode = TemperatureNode.Elements("span").Where(x => x.GetAttributeValue("class", "").EndsWith("temp c")).FirstOrDefault();
                         if (TemperatureNode != null)
-                            if (int.TryParse(TemperatureNode.InnerText.Replace("&minus;", "-"), out _temperature))
+                            if (int.TryParse(TemperatureNode.InnerText, out _temperature))
                                 _weather.Temperature = _temperature;
                             else
-                                throw new Exception("Error while parsing Temperature ["+ TemperatureNode.InnerText.Replace('−', '-') + "]" );
+                                throw new Exception("Error while parsing Temperature");
                     }
 
                     var OtherNodes = DayPartWeatherInfoNode.Elements("td").Where(x => x.HasAttributes == false);
@@ -144,17 +144,16 @@ namespace GisMeteoWeather
                     {
                         TempFeelNode = TempFeelNode.Elements("span").Where(x => x.GetAttributeValue("class", "").EndsWith("temp c")).FirstOrDefault();
                         if (TempFeelNode != null)
-                            if (int.TryParse(TempFeelNode.InnerText.Replace("&minus;", "-"), out _temperatureFeel))
+                            if (int.TryParse(TempFeelNode.InnerText, out _temperatureFeel))
                                 _weather.TemperatureFeel = _temperatureFeel;
                             else
-                                throw new Exception("Error while parsing TemperatureFeel [" + TempFeelNode.InnerText.Replace('−', '-') + "]");
+                                throw new Exception("Error while parsing TemperatureFeel");
                     }
-                    _logger.Trace("Parse() = success");
                 }
                 else
                     throw new Exception("Error: Elements not found!");
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
                 HasError = true;
                 _logger.Error("Error occured while parsing '{0}'('{1}'). Message: {2}", dayToParse, partOfDay, ex.Message);
@@ -227,9 +226,9 @@ namespace GisMeteoWeather
             _logger.Info("Application started");
             bool isSettingDone = false;
             string _answer = string.Empty;
-
-            _logger.Debug("Setting default parser params");
-            Parser.TargetUrl = Properties.Resources.TargetSiteUrl;
+            
+            _logger.Debug("Setting default parser paramms");
+            _parser.TargetUrl = Properties.Resources.TargetSiteUrl;
             _parser.RefreshPeriod = new TimeSpan(0, 30, 0);
             _parser.ParserHandler = new Parser.ParserGetDataHandler(ParseWeatherData);
             WeatherInfoList = new List<WeatherItem>();
@@ -244,26 +243,45 @@ namespace GisMeteoWeather
             {
                 if (isDbInfoSetted)
                 {
+                    _logger.Trace("Preparing database");
                     DataBase.Prepare();
+                    _logger.Trace("Checking new cities on the gismeteo main page");
+
+                    _parser.Cities = ParseCityList();
+                    var citylist = DataBase.ReadCityList();
+                    Dictionary<int, string> other = new Dictionary<int, string>();
+
+                    var newCities = _parser.Cities.Except(citylist).ToList();
+
+                    if (newCities.Count != 0)
+                    {
+                        foreach (var item in newCities)
+                        {
+                            other.Add(item.Key, item.Value);
+                        }
+                        _logger.Trace("New cities available. Adding to database");
+                        DataBase.WriteCityList(other);
+                    }
                     isSettingDone = true;
                 }
                 else
                 {
-                    Console.WriteLine("\nSet connection information to continue...\n");
-                    var comList = new List<Command>() { Command.SetServer, Command.SetPort, Command.SetUser, Command.SetPassword };
-                    ShowCommand(comList);
-
+                    Console.WriteLine("Set connection information to continue...\n");
+                    Console.WriteLine("{0,-20} - set DB username", Command.SetUser.ToString().ToLower() + " [username]");
+                    Console.WriteLine("{0,-20} - set DB password", Command.SetPassword.ToString().ToLower());
+                    Console.WriteLine("{0,-20} - set DB server", Command.SetServer.ToString().ToLower() + " [server]");
+                    Console.WriteLine("{0,-20} - set DB port\n", Command.SetPort.ToString().ToLower() + " [port]");
                     do
                     {
                         _answer = Console.ReadLine();
                         RunCommand(_answer);
                     } while (!isDbInfoSetted);
-                }
+                } 
             } while (!isSettingDone);
 
             _logger.Debug("Parser setting completed");
         }
-
+       
         /// <summary>
         /// Обработчик пользовательского ввода
         /// </summary>
@@ -271,34 +289,20 @@ namespace GisMeteoWeather
         public static void RunCommand(string answer)
         {
             string value = string.Empty;
+
             var command = GetCommand(answer);
 
             switch (command)
             {
                 case Command.Start:
-                    _logger.Trace("Checking new cities on the gismeteo main page");
-                    _parser.Cities = ParseCityList();
-                    //Проверяем наличие новых городов на главной странице, добавляем новые в базу
-                    var citylist = DataBase.ReadCityList();
-
-                    var newCities = _parser.Cities.Except(citylist).ToDictionary( k => k.Key, v => v.Value);
-
-                    if (newCities.Count != 0)
-                    {
-                        _logger.Debug("New cities available. Adding to database");
-                        DataBase.WriteCityList(newCities);
-                        _logger.Info("Added {0} cities", newCities.Count);
-                        newCities.Clear();
-                    }
-                    //Запускаем парсер
-                    if (_parser.Status != ParserStatus.Working && _parser.Status != ParserStatus.Sleeping)
+                    if (_parser.Status != ParserStatus.Working || _parser.Status != ParserStatus.Sleeping)
                         _parser.Start();
                     else
                         Console.WriteLine("Parser already working");
                     break;
 
                 case Command.Stop:
-                    if (_parser.Status != ParserStatus.Aborted && _parser.Status != ParserStatus.Stoped)
+                    if (_parser.Status != ParserStatus.Aborted || _parser.Status != ParserStatus.Stoped)
                         _parser.Stop();
                     else
                         Console.WriteLine("Parser already stopped");
@@ -336,7 +340,7 @@ namespace GisMeteoWeather
                 case Command.SetUser:
                     value = answer.Replace(" ", "");
                     value = value.Remove(0, Command.SetUser.ToString().Length);
-                    if (value.Length != 0)
+                    if(value.Length != 0)
                     {
                         DataBase.Username = value;
                         DataBase.SaveSettings();
@@ -413,7 +417,17 @@ namespace GisMeteoWeather
 
                 case Command.Help:
                     Console.WriteLine("Available commands:\n");
-                    ShowCommand();
+                    Console.WriteLine("{0,-20} - start parser", Command.Start.ToString().ToLower());
+                    Console.WriteLine("{0,-20} - stop parser", Command.Stop.ToString().ToLower());
+                    Console.WriteLine("{0,-20} - parser status", Command.Status.ToString().ToLower());
+                    Console.WriteLine("{0,-20} - set parser starting period", Command.SetPeriod.ToString().ToLower() + " [minutes]");
+                    Console.WriteLine("{0,-20} - get city name by id", Command.CityId.ToString().ToLower() + " [id]");
+                    Console.WriteLine("{0,-20} - set DB username", Command.SetUser.ToString().ToLower() + " [username]");
+                    Console.WriteLine("{0,-20} - set DB password", Command.SetPassword.ToString().ToLower());
+                    Console.WriteLine("{0,-20} - set DB server", Command.SetServer.ToString().ToLower() + " [server]");
+                    Console.WriteLine("{0,-20} - set DB port", Command.SetPort.ToString().ToLower() + " [port]");
+                    Console.WriteLine("{0,-20} - shows list of available commands", Command.Help.ToString().ToLower());
+                    Console.WriteLine("{0,-20} - stop parser and exit\n", Command.Exit.ToString().ToLower());
                     break;
 
                 case Command.Exit:
@@ -426,56 +440,6 @@ namespace GisMeteoWeather
                     Console.WriteLine("Unknown command. Print '{0}' to view list of available commands", Command.Help.ToString().ToLower());
                     break;
             }
-        }
-        /// <summary>
-        /// Выводит список доступных команд
-        /// </summary>
-        /// <param name="commands">Список команд для отображения</param>
-        private static void ShowCommand(IEnumerable<Command> commands)
-        {
-            if(commands.Contains(Command.Start))
-                Console.WriteLine("{0,-20} - start parser", Command.Start.ToString().ToLower());
-            if(commands.Contains(Command.Stop))
-                Console.WriteLine("{0,-20} - stop parser", Command.Stop.ToString().ToLower());
-            if (commands.Contains(Command.Status))
-                Console.WriteLine("{0,-20} - parser status", Command.Status.ToString().ToLower());
-            if (commands.Contains(Command.SetPeriod))
-                Console.WriteLine("{0,-20} - set parser starting period", Command.SetPeriod.ToString().ToLower() + " [minutes]");
-            if (commands.Contains(Command.CityId))
-                Console.WriteLine("{0,-20} - get city name by id", Command.CityId.ToString().ToLower() + " [id]");
-            if (commands.Contains(Command.SetUser))
-                Console.WriteLine("{0,-20} - set DB username", Command.SetUser.ToString().ToLower() + " [username]");
-            if (commands.Contains(Command.SetPassword))
-                Console.WriteLine("{0,-20} - set DB password", Command.SetPassword.ToString().ToLower());
-            if (commands.Contains(Command.SetServer))
-                Console.WriteLine("{0,-20} - set DB server", Command.SetServer.ToString().ToLower() + " [server]");
-            if (commands.Contains(Command.SetPort))
-                Console.WriteLine("{0,-20} - set DB port", Command.SetPort.ToString().ToLower() + " [port]");
-            if (commands.Contains(Command.Help))
-                Console.WriteLine("{0,-20} - shows list of available commands", Command.Help.ToString().ToLower());
-            if (commands.Contains(Command.Exit))
-                Console.WriteLine("{0,-20} - stop parser and exit\n", Command.Exit.ToString().ToLower());
-        }
-        /// <summary>
-        /// Выводит список всех доступных команд
-        /// </summary>
-        public static void ShowCommand()
-        {
-            List<Command> list = new List<Command>()
-            {
-                Command.Start,
-                Command.Stop,
-                Command.Status,
-                Command.CityId,
-                Command.SetUser,
-                Command.SetPassword,
-                Command.SetServer,
-                Command.SetPort,
-                Command.Help,
-                Command.Exit,
-                Command.SetPeriod
-            };
-            ShowCommand(list);
         }
 
         /// <summary>
@@ -653,11 +617,13 @@ namespace GisMeteoWeather
         /// <param name="e"></param>
         public static void parser_Asleep(object sender, EventArgs e)
         {
-            DataBase.WriteWeather(WeatherInfoList);
-            _logger.Debug("Database: Added {0} items", WeatherInfoList.Count);
             _logger.Debug("Parser status: {0}", _parser.Status);
             Console.WriteLine("Parser goes to sleep [{0}]", DateTime.Now.ToLongTimeString());
-
+            foreach (var item in WeatherInfoList)
+            {
+                DataBase.WriteWeatherItem(item);
+            }
+            _logger.Debug("Database: Added {0} items", WeatherInfoList.Count);
             WeatherInfoList.Clear();
         }
 
