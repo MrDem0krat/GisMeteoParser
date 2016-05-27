@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ParserLib
 {
@@ -13,28 +9,21 @@ namespace ParserLib
         /// </summary>
         event EventHandler<WeatherParsedEventArgs> WeatherParsed;
         /// <summary>
-        /// Событие генерируется при очередном запуске парсера
+        /// Возникает при изменении состояния парсера
         /// </summary>
-        event EventHandler ParserStarted;
-        /// <summary>
-        /// Событие генерируется после того, так парсер собрал информацию и уснул на заданный промежуток времени
-        /// </summary>
-        event EventHandler ParserAsleep;
-        /// <summary>
-        /// Событие генерируется при завершении работы парсера
-        /// </summary>
-        event EventHandler ParserStopped;
+        event EventHandler<StateChangedEventArgs> StateChanged;
+
         /// <summary>
         /// Текущее соостояние парсера
         /// </summary>
-        ParserStatus Status { get; }
+        Parser.ParserState State { get; }
         
         /// <summary>
         /// Запуск парсера в отдельном потоке
         /// </summary>
         /// <param name="prms"></param>
         /// <returns></returns>
-        void Start(params string[] prms);
+        void Start();
 
         /// <summary>
         /// Принудительная остановка парсера 
@@ -42,11 +31,4 @@ namespace ParserLib
         void Stop();
     }
 
-    public enum ParserStatus
-    {
-        Stoped = 0,
-        Working = 1,
-        Sleeping = 2,
-        Aborted = 3
-    }
 }

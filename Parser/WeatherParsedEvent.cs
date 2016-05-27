@@ -1,5 +1,5 @@
 ﻿using System;
-using Weather;
+using Gismeteo.Weather;
 
 namespace ParserLib
 {
@@ -10,7 +10,6 @@ namespace ParserLib
         public Exception Exception { get; private set; }
         public string ErrorText { get; private set; }
         public DateTime ParsedTime { get; private set; }
-
 
         public WeatherParsedEventArgs() { }
         public WeatherParsedEventArgs(IWeatherItem weatherItem, DateTime parsedTime, string errorText = null, Exception ee = null)
