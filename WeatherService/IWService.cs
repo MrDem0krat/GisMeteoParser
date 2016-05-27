@@ -1,10 +1,9 @@
-﻿using System;
+﻿using Gismeteo.City;
+using Gismeteo.Weather;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
 using System.ServiceModel;
-using System.Text;
-using Weather;
+
 
 namespace WeatherService
 {
@@ -32,7 +31,7 @@ namespace WeatherService
         /// </summary>
         /// <returns></returns>
         [OperationContract]
-        Dictionary<int, string> GetAllCities();
+        List<City> GetAllCities();
 
         /// <summary>
         /// Возвращает прогноз для указанного города на выбранный промежуток времени
@@ -43,12 +42,5 @@ namespace WeatherService
         /// <returns></returns>
         [OperationContract]
         WeatherItem GetWeather(int id, DateTime date, DayPart part);
-
-        /// <summary>
-        /// Функция для проверки связи с сервисом
-        /// </summary>
-        /// <returns></returns>
-        [OperationContract]
-        bool CheckConnection();
     }
 }
