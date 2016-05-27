@@ -7,7 +7,7 @@
     <ProjectGuid>{BB380125-9DC7-4FB4-8A47-E084D699D285}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Weather</RootNamespace>
+    <RootNamespace>Gismeteo</RootNamespace>
     <AssemblyName>WeatherLib</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="City.cs" />
     <Compile Include="IWeatherItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WeatherItem.cs" />
