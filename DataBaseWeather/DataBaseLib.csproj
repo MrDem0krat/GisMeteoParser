@@ -7,7 +7,7 @@
     <ProjectGuid>{075D17F3-153A-480D-99DA-3B06D1D03709}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DataBaseLib</RootNamespace>
+    <RootNamespace>Database</RootNamespace>
     <AssemblyName>DataBaseLib</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

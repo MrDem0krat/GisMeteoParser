@@ -6,10 +6,10 @@ using System.Data;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
-using Weather;
+using Gismeteo.Weather;
+using Gismeteo.City;
 
-namespace DataBaseLib
+namespace Database
 {
     /// <summary>
     /// Обслуживающий класс для работы с базой данных
@@ -39,18 +39,23 @@ namespace DataBaseLib
         private enum WeatherTableColumn
         {
             ID = 0,
-            City_ID = 1,
-            Date = 2,
-            DayPart = 3,
-            Temperature = 4,
-            TemperatureFeel = 5,
-            Condition = 6,
-            TypeImage = 7,
-            Humidity = 8,
-            Pressure = 9,
-            WindDirection = 10,
-            WindSpeed = 11,
-            RefreshTime = 12
+            City_ID,
+            Date,
+            DayPart,
+            Temperature,
+            TemperatureFeel,
+            Condition,
+            TypeImage,
+            Humidity,
+            Pressure,
+            WindDirection,
+            WindSpeed,
+            RefreshTime
+        }
+        private enum CityTableColumn
+        {
+            ID = 0,
+            Name
         }
 
         /// <summary>
@@ -60,39 +65,10 @@ namespace DataBaseLib
         {
             get { return Convert.FromBase64String(Properties.Settings.Default.AdditionalEntropy); }
         }
-
         /// <summary>
-        /// Адрес сервера MySQL
+        /// ConnectionString для подлкючения к MySql-серверу
         /// </summary>
-        public static string Server
-        {
-            get { return Properties.Settings.Default.Server; }
-            set { Properties.Settings.Default.Server = value; }
-        }
-        /// <summary>
-        /// Порт для подключения к серверу MySQL
-        /// </summary>
-        public static uint Port
-        {
-            get { return Properties.Settings.Default.Port; }
-            set { Properties.Settings.Default.Port = value; }
-        }
-        /// <summary>
-        /// Имя пользователя для подключения к серверу MySQL
-        /// </summary>
-        public static string Username
-        {
-            get { return Properties.Settings.Default.User; }
-            set { Properties.Settings.Default.User = value; }
-        }
-        /// <summary>
-        /// Пароль для доступа к серверу MySQL
-        /// </summary>
-        public static string Password
-        {
-            private get { return DecodePassword(Properties.Settings.Default.Password); }
-            set { Properties.Settings.Default.Password = EncodePassword(value); }
-        }
+        public static string ConnectionString { private get; set; }
 
         /// <summary>
         /// Зашифровать пароль
@@ -145,10 +121,7 @@ namespace DataBaseLib
             MySqlConnection connection = new MySqlConnection();
             MySqlConnectionStringBuilder connectionBuilder = new MySqlConnectionStringBuilder();
 
-            connectionBuilder.Server = Server;
-            connectionBuilder.Port = Port;
-            connectionBuilder.UserID = Username;
-            connectionBuilder.Password = Password;
+            connectionBuilder.ConnectionString = ConnectionString;
             connectionBuilder.Database = database.ToLower();
 
             connection.ConnectionString = connectionBuilder.ConnectionString;
@@ -156,12 +129,12 @@ namespace DataBaseLib
             {
                 if (connection.Database != "information_schema")
                 {
-                    _logger.Trace("Trying to connect to '{0}.{1}'", Server, connection.Database);
+                    _logger.Trace("Trying to connect to '{0}.{1}'", connectionBuilder.Server, connection.Database);
                     if (CheckDataBase(connection.Database))
                     {
                         if(connection.State != ConnectionState.Open)
                             connection.Open();
-                        _logger.Trace("'{0}'.'{1}' - connected", Server, connection.Database);
+                        _logger.Trace("'{0}'.'{1}' - connected", connectionBuilder.Server, connection.Database);
                     }
                     else
                         throw new Exception("Database not found");
@@ -170,24 +143,12 @@ namespace DataBaseLib
             }
             catch (Exception ex)
             {
-                _logger.Warn("Error occurred while connecting '{1}.{0}'. Message: {2}", connection.Database, Server, ex.Message);
+                _logger.Warn("Error occurred while connecting '{1}.{0}'. Message: {2}", connection.Database, connectionBuilder.Server, ex.Message);
                 if (connection.State == ConnectionState.Open || connection.State == ConnectionState.Connecting)
                     connection.Close();
                 connection = new MySqlConnection();
             }
             return connection;
-        }
-        /// <summary>
-        /// Подключается к указанной базе данных на сервере в асинхронной манере
-        /// </summary>
-        /// <param name="database">Имя базы данных</param>
-        /// <returns></returns>
-        public async static Task<MySqlConnection> ConnectAsync(string database = "information_schema")
-        {
-            return await Task.Run(() =>
-            {
-                return Connect(database);
-            });
         }
 
         /// <summary>
@@ -199,15 +160,8 @@ namespace DataBaseLib
             if(connection.State != ConnectionState.Closed)
             {
                 connection.Close();
-                _logger.Trace("Disconnected: '{0}.{1}'", Server, connection.Database);
+                _logger.Trace("Disconnected: '{0}'", connection.Database);
             }
-        }
-        public static async Task DisconnectAsync(MySqlConnection connection)
-        {
-            await Task.Run(() =>
-            {
-                Disconnect(connection);
-            });
         }
 
         /// <summary>
@@ -224,7 +178,7 @@ namespace DataBaseLib
             bool result = false;
             List<string> databases = new List<string>();
 
-            _logger.Trace("Checking database '{0}.{1}'", Server, database);
+            _logger.Trace("Checking database '{0}'", database);
             using (connection)
             {
                 try
@@ -241,11 +195,11 @@ namespace DataBaseLib
                         reader.Close();
                         if (databases.Contains(database))
                         {
-                            _logger.Trace("Check database '{0}.{1}' - success", Server, database);
+                            _logger.Trace("Check database '{0}' - success", database);
                             result = true;
                         }
                         else
-                            _logger.Trace("Check database '{0}.{1}' - not found", Server, database);
+                            _logger.Trace("Check database '{0}' - not found", database);
                     }
                 }
                 catch (Exception ex)
@@ -266,29 +220,6 @@ namespace DataBaseLib
         {
             MySqlConnection connection = Connect();
             return CheckDataBase(database, connection);
-        }
-        /// <summary>
-        /// Проверяет наличие базы данных на сервере в асинхронной манере
-        /// </summary>
-        /// <param name="database">Имя искомой базы данных</param>
-        /// <returns></returns>
-        public static async Task<bool> CheckDataBaseAsync(string database)
-        {
-            MySqlConnection connect = await ConnectAsync();
-            return await CheckDataBaseAsync(database);
-        }
-        /// <summary>
-        /// Проверяет наличие базы данных на сервере в асинхронной манере
-        /// </summary>
-        /// <param name="database">Имя искомой базы данных</param>
-        /// <param name="connection">Подключение к серверу</param>
-        /// <returns></returns>
-        public static async Task<bool> CheckDataBaseAsync(string database, MySqlConnection connection)
-        {
-            return await Task.Run(() =>
-            {
-                return CheckDataBase(database, connection);
-            });
         }
 
         /// <summary>
@@ -344,36 +275,6 @@ namespace DataBaseLib
                 return result;
             }
         }
-        /// <summary>
-        /// Проверяет наличие таблицы в базе данных
-        /// </summary>
-        /// <param name="table">Имя искомой таблицы</param>
-        /// <param name="database">Имя базы данных, в которой необходимо произвести поиск</param>
-        /// <returns></returns>
-        public static bool CheckTable(TableType table, string database)
-        {
-            return CheckTable(table, Connect(database));
-        }
-        /// <summary>
-        /// Проверяет наличие таблицы в базе данных в асинхронной манере
-        /// </summary>
-        /// <param name="table">Имя искомой таблицы</param>
-        /// <param name="database">Имя базы данных, в которой необходимо произвести поиск</param>
-        /// <returns></returns>
-        public static async Task<bool> CheckTableAsync(TableType table, string database)
-        {
-            return await CheckTableAsync(table, await ConnectAsync(database));
-        }
-        /// <summary>
-        /// Проверяет наличие таблицы в базе данных в асинхронной манере
-        /// </summary>
-        /// <param name="table">Имя искомой таблицы</param>
-        /// <param name="connection">Подключение к базе данных, в которой необходимо произвести поиск</param>
-        /// <returns></returns>
-        public static async Task<bool> CheckTableAsync(TableType table, MySqlConnection connection)
-        {
-            return await Task.Run(() => { return CheckTable(table, connection); });
-        }
 
         /// <summary>
         /// Создает новую базу на сервере
@@ -387,11 +288,11 @@ namespace DataBaseLib
                 var comText = string.Format("CREATE DATABASE IF NOT EXISTS {0} CHARACTER SET cp1251 COLLATE cp1251_general_ci", database);
                 MySqlCommand command = new MySqlCommand();
 
-                _logger.Trace("Trying to create new database '{0}.{1}'", Server, database);
+                _logger.Trace("Trying to create new database '{0}'", database);
                 try
                 {
                     if (CheckDataBase(database, connection))
-                        _logger.Trace("Create DataBase '{1}.{0}' -  already exists", Server, database);
+                        _logger.Trace("Create DataBase '{0}' -  already exists", database);
                     else
                     {
                         if (connection.State != ConnectionState.Open)
@@ -400,26 +301,17 @@ namespace DataBaseLib
                         command.CommandText = comText;
                         command.ExecuteNonQuery();
                         if (CheckDataBase(database, connection))
-                            _logger.Debug("Created DataBase: '{1}.{0}'", Server, database);
+                            _logger.Debug("Created DataBase: '{0}'", database);
                         else
                             throw new Exception("'Create' command was sent, but database wasn't created");
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error("Error occurred while creating database '{0}.{1}'. Message: {2}", Server, database, ex.Message);
+                    _logger.Error("Error occurred while creating database '{0}'. Message: {1}", database, ex.Message);
                 }
                 Disconnect(connection);
             }
-        }
-        /// <summary>
-        /// Создает новую базу на сервере в асинхронной манере
-        /// </summary>
-        /// <param name="database">Имя создаваемой базы данных</param>
-        /// <returns></returns>
-        public static async Task CreateDataBaseAsync(string database)
-        {
-            await Task.Run(() => { CreateDataBase(database); });
         }
 
         /// <summary>
@@ -498,37 +390,6 @@ namespace DataBaseLib
                 Disconnect(connection);
             }
         }
-        /// <summary>
-        /// Создает новую таблицу в базе данных
-        /// </summary>
-        /// <param name="database">Имя базы данных, в которой требуется создать таблицу</param>
-        /// <param name="table">Тип создаваемой таблицы</param>
-        public static void CreateTable(TableType table, string database)
-        {
-            if (CheckDataBase(database))
-                CreateTable(table, Connect(database));
-        }
-        /// <summary>
-        /// Создает новую таблицу в базе данных в асинхронной манере
-        /// </summary>
-        /// <param name="database">Имя базы данных, в которой требуется создать таблицу</param>
-        /// <param name="table">Тип создаваемой таблицы</param>
-        /// <returns></returns>
-        public static async Task CreateTableAsync(TableType table, string database)
-        {
-            if (await CheckDataBaseAsync(database))
-                await CreateTableAsync(table, await ConnectAsync(database));
-        }
-        /// <summary>
-        /// Создает новую таблицу в базе данных в асинхронной манере
-        /// </summary>
-        /// <param name="connection">Соединение с базой данных, в которой требуется создать таблицу</param>
-        /// <param name="table">Тип создаваемой таблицы</param>
-        /// <returns></returns>
-        public static async Task CreateTableAsync(TableType table, MySqlConnection connection)
-        {
-            await Task.Run(() => { CreateTable(table, connection); });
-        }
 
         /// <summary>
         /// Подготавливает необходимую для работы базу данных и набор таблиц
@@ -545,18 +406,7 @@ namespace DataBaseLib
                 CreateTable(TableType.City, connection);
                 Disconnect(connection);
             }
-            _logger.Debug("Prepare Database '{0}'.'{1}' - success", Server, Properties.Settings.Default.DBName);
-        }
-        /// <summary>
-        /// Подготавливает необходимую для работы базу данных и набор таблиц
-        /// </summary>
-        /// <returns></returns>
-        public static async Task PrepareAsync()
-        {
-            await Task.Run(() =>
-            {
-                Prepare();
-            });
+            _logger.Debug("Prepare Database '{0}' - success", Properties.Settings.Default.DBName);
         }
 
         /// <summary>
@@ -614,7 +464,7 @@ namespace DataBaseLib
 
                         command.ExecuteNonQuery();
                     }
-                    _logger.Debug("WriteWeather() = success");
+                    _logger.Trace("WriteWeather() = success");
                     result = true;
                 }
                 catch (Exception ex)
@@ -629,9 +479,9 @@ namespace DataBaseLib
         /// Записывает сведения о погоде в базу данных
         /// </summary>
         /// <param name="weather">Прогноз, который требуется записать</param>
-        public static bool WriteWeather(WeatherItem weather)
+        public static bool WriteWeather(IWeatherItem weather)
         {
-            List<WeatherItem> items = new List<WeatherItem>() { weather };
+            List<WeatherItem> items = new List<WeatherItem>() { weather as WeatherItem };
             return WriteWeather(items);
         }
 
@@ -639,7 +489,7 @@ namespace DataBaseLib
         /// Записывает список городов, для которых предоставляется прогноз
         /// </summary>
         /// <param name="cities">Список городов</param>
-        public static bool WriteCityList(Dictionary<int, string> cities)
+        public static bool WriteCities(List<City> cities)
         {
             MySqlCommand command = new MySqlCommand();
             bool result = false;
@@ -660,8 +510,8 @@ namespace DataBaseLib
 
                     foreach (var city in cities)
                     {
-                        command.Parameters["@ID"].Value = city.Key;
-                        command.Parameters["@Name"].Value = city.Value;
+                        command.Parameters["@ID"].Value = city.ID;
+                        command.Parameters["@Name"].Value = city.Name;
 
                         command.ExecuteNonQuery();
                     }
@@ -681,9 +531,9 @@ namespace DataBaseLib
         /// Возвращает список городов, прочитанных из базы данных
         /// </summary>
         /// <returns>Список городов, хранящий ID и название города</returns>
-        public static Dictionary<int, string> ReadCityList()
+        public static List<City> ReadCities()
         {
-            Dictionary<int, string> result = new Dictionary<int, string>();
+            List<City> result = new List<City>();
 
             _logger.Trace("Trying to read list of cities");
             using (var connection = Connect(Properties.Settings.Default.DBName))
@@ -698,7 +548,7 @@ namespace DataBaseLib
                     {
                         while (reader.Read())
                         {
-                            result.Add(reader.GetInt32(0), reader.GetString(1));
+                            result.Add(new City(reader.GetInt32((int)CityTableColumn.ID), reader.GetString((int)CityTableColumn.Name)));
                         }
                         reader.Close();
                         _logger.Trace("ReadCirylist() - success");
@@ -722,22 +572,52 @@ namespace DataBaseLib
         /// <returns>Возвращает строку с названием города либо пустую строку</returns>
         public static string ReadCityName(int id)
         {
-            _logger.Trace("Trying to get city name of '{0}'", id);
-            Dictionary<int, string> cities = ReadCityList();
-            bool isFound = false;
+            string result = string.Empty;
 
-            var cityName = from c in cities where c.Key == id select c.Value;
-            if (cityName.ToArray().Count() > 0)
+            using (var connection = Connect(Properties.Settings.Default.DBName))
             {
-                isFound = true;
-                _logger.Trace("GetCityName(): '{0}' is '{1}'", id, cityName.FirstOrDefault());
-            }
-            else
-            {
-                _logger.Trace("GetCityName(): '{0}' is not founded");
-            }
+                MySqlCommand command = new MySqlCommand(string.Format("SELECT * FROM {0} WHERE ID = {1}", Properties.Settings.Default.TableCityName, id), connection);
+                _logger.Trace("Trying to get city name of '{0}'", id);
 
-            return isFound ? cityName.First() : "Not Found";
+                try
+                {
+                    if (connection.State != ConnectionState.Open)
+                        connection.Open();
+                    var reader = command.ExecuteReader();
+                    var commmandResults = new List<City>();
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            commmandResults.Add(new City(reader.GetInt32((int)CityTableColumn.ID), reader.GetString((int)CityTableColumn.Name)));
+                        }
+                    }
+                    else
+                        throw new KeyNotFoundException(string.Format("City with ID {0} not found", id));
+                    if (commmandResults.Count == 1)
+                        result = commmandResults.First().Name;
+                    else
+                    {
+                        var founded = string.Empty;
+                        foreach (var item in commmandResults)
+                        {
+                            founded += string.Format("'{0}'{1}", item.Name, item.Name != commmandResults.Last().Name ? ", " : "");
+                        }
+                        throw new Exception(string.Format("Founded more then one city on id '{0}': {1}", id, founded));
+                    }
+                }
+                catch (KeyNotFoundException kex)
+                {
+                    _logger.Debug(kex.Message);
+                    return "Not Found";
+                }
+                catch (Exception ex)
+                {
+                    _logger.Warn(ex.Message);
+                    return string.Empty;
+                }
+            }
+            return result;
         }
 
         /// <summary>
@@ -799,15 +679,6 @@ namespace DataBaseLib
                 Disconnect(connection);
                 return weather;
             }
-        }
-
-        /// <summary>
-        /// Сохраняет настройки подключения к базе данных
-        /// </summary>
-        public static void SaveSettings()
-        {
-            Properties.Settings.Default.Save();
-            _logger.Debug("DataBase: Settings saved");
         }
     }
 }
